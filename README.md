@@ -9,7 +9,9 @@ The following features are currently added:
 
 -zoom in or our on cluster: using the + or - button added to every cluster the drwaing is zooming in or out on the cluster.
 
--visibility switches: CSS classes can be added in grahviz dot to nodes or edges, all classes are listed and by clicking on the class the visibility of all nodes and edges with that class are hidden or shown.
+The script is also adding a header section to the SVG with several features
+
+-visibility switches: CSS classes can be added in grahviz dot to nodes or edges, all classes are listed in a button which will hide or show all nodes and edges with that class after clicking.
 
 -(April 5th 2024) I am working on making a slider button that can be used to let items appear in the order defined by numerical CSS classes added to edges and nodes. numerical classes can be ordered integer, could be just 1,2,3,... or years. They are dynamically picked up. Will soon be released.
 
