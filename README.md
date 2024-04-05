@@ -5,7 +5,7 @@ javascript code that can be added to an SVG created by Graphviz to make it dynam
 
 The following features are currently added:
 
--Highlighting: when nodes or edges are clicked they are highlighted. this makes is easier to trace certain edges when there are many edges in a diagram
+-Highlighting: when nodes or edges are clicked they are highlighted. When clicking on a node all connecting edges are also highlighted, making it easier to trace them when there are many edges in a diagram
 
 -zoom in or our on cluster: using the + or - button added to every cluster the drwaing is zooming in or out on the cluster.
 
