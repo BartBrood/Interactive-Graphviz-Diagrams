@@ -10,43 +10,41 @@
 }-->
 .text-highlight-nodes text{
     opacity: 1 !important;
-    stroke-width: 10;
-    font-size: 20px;
+    stroke-width: 2;
     font-weight: bold;
     fill: black;
 }
 .text-highlight-edges text{
     opacity: 1 !important;
-    stroke-width: 10;
-    font-size: 20px;
+    stroke-width: 2;
     font-weight: bold;
     fill: Indigo;
 }
 .edge-highlight path{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
 }	
 .edge-highlight polygon{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
 }
 .node-highlight polygon{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
     z-index:99999;	
 }
 .node-highlight ellipse{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
     z-index:99999;	
 }
 .node-highlight path{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
     z-index:99999;	
 }
@@ -178,7 +176,7 @@ function clickNode() {
         // Escape special characters in the node name
         var nodeNameEscaped = nodeName.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
 
-        var patroon = new RegExp('^' + nodeNameEscaped + '->|->' + nodeNameEscaped + '$|' + nodeNameEscaped + '--|--' + nodeNameEscaped + '$')
+        var patroon = new RegExp('^' + nodeNameEscaped + '(:\\w+)?->|->' + nodeNameEscaped + '(:\\w+)?$|^' + nodeNameEscaped + '(:\\w+)?--|--' + nodeNameEscaped + '(:\\w+)?$')
 
         if (this.classList.contains("node-highlight")) {
             this.classList.remove("node-highlight");
