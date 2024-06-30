@@ -170,7 +170,7 @@ function addInteractivity(evt) {
             }
         }	
     }
-function clickNode() {
+function clickNode(event) {
     if (nodrag) {
         var nodeName = this.childNodes[1].textContent;
         // Escape special characters in the node name
@@ -200,6 +200,9 @@ function clickNode() {
                 }
             }
         }
+        // Prevent opening a possible URL attached to the node
+        // Note that the URL can still be opened with browser contextual menu (right-click)
+        event.preventDefault()
     }
 }
 function animateEdge(edge){
