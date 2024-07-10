@@ -176,7 +176,7 @@ function clickNode(event) {
         // Escape special characters in the node name
         var nodeNameEscaped = nodeName.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
 
-        var patroon = new RegExp('^' + nodeNameEscaped + '(:\\w+)?->|->' + nodeNameEscaped + '(:\\w+)?$|^' + nodeNameEscaped + '(:\\w+)?--|--' + nodeNameEscaped + '(:\\w+)?$')
+        var patroon = new RegExp('^' + nodeNameEscaped + '(:\\w+)*->|->' + nodeNameEscaped + '(:\\w+)*$|^' + nodeNameEscaped + '(:\\w+)*--|--' + nodeNameEscaped + '(:\\w+)*$')
 
         if (this.classList.contains("node-highlight")) {
             this.classList.remove("node-highlight");
