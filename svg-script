@@ -69,7 +69,7 @@
         }
 </style>
 <script>
-<![CDATA[
+//<![CDATA[
 function addInteractivity(evt) {
     
 	var svg = evt.target;
@@ -206,28 +206,32 @@ function clickNode(event) {
     }
 }
 function animateEdge(edge){
-		var path = edge.querySelector('path');
-		var polygon = edge.querySelector('polygon');
-		var length = path.getTotalLength();
-		// Clear any previous transition
-		path.style.transition = path.style.WebkitTransition = 'none';
-		if (polygon){polygon.style.transition = polygon.style.WebkitTransition = 'none';};
-		// Set up the starting positions
-		path.style.strokeDasharray = length + ' ' + length;
-		path.style.strokeDashoffset = length;
-		if(polygon){polygon.style.opacity='0';};
-		// Trigger a layout so styles are calculated & the browser
-		// picks up the starting position before animating
-		path.getBoundingClientRect();
-		// Define our transition
-		path.style.transition = path.style.WebkitTransition =
-		'stroke-dashoffset 2s ease-in-out';
-		if (polygon){polygon.style.transition = polygon.style.WebkitTransition =
-		'fill-opacity 1s ease-in-out 2s';};
-		// Go!
-		path.style.strokeDashoffset = '0';
-        if (polygon){setTimeout(function(){polygon.style.opacity='1';},2000)};
-	}
+    let pathList = edge.querySelectorAll('path');
+    for (let i = 0; i < pathList.length; i++) {
+        let path = pathList[i];
+        let length = path.getTotalLength();
+        // Clear any previous transition
+        path.style.transition = path.style.WebkitTransition = 'none';
+        // Set up the starting positions
+        path.style.strokeDasharray = length + ' ' + length;
+        path.style.strokeDashoffset = length;
+        // Trigger a layout so styles are calculated & the browser
+        // picks up the starting position before animating
+        path.getBoundingClientRect();
+        // Define our transition
+        path.style.transition = path.style.WebkitTransition = 'stroke-dashoffset 2s ease-in-out';
+        path.style.strokeDashoffset = '0';
+    }
+    let polygonList = edge.querySelectorAll('polygon');
+    for (let i = 0; i < polygonList.length; i++) {
+        let polygon = polygonList[i];
+        polygon.style.transition = polygon.style.WebkitTransition = 'none';
+        polygon.style.opacity='0';
+        polygon.style.transition = polygon.style.WebkitTransition = 'fill-opacity 1s ease-in-out 2s';
+        setTimeout(function(){polygon.style.opacity='1';},2000)
+    }
+}
+
 	function addzoomers(cluster){
 
 		var bb = cluster.getBBox();
@@ -594,5 +598,5 @@ function adjustViewBox(svg) {
   var newViewBox = viewBoxParts[0] + " " + newYMin + " " + newXMax + " " + newYMax;
   svg.setAttribute("viewBox", newViewBox);
 }
-]]>
+//]]>
 </script>
