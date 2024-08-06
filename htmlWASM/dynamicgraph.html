@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graphviz Example with Improved Animations</title>
+  <style>
+    #dot-src-container { margin: 10px 0; }
+    textarea { width: 100%; height: 200px; resize: vertical; }
+    #svg-container { overflow: auto; }
+    .cluster { cursor: pointer; }
+    .cluster:hover { opacity: 0.8; }
+    .cluster-collapsed { stroke-width: 2px; stroke-dasharray: 5, 5; }
+    .node { cursor: pointer; }
+    .node ellipse, .node polygon, .node rect { transition: all 0.5s ease-in-out; }
+  </style>
+</head>
+<body>
+  <div id="dot-src-container">
+    <textarea id="dot-src" spellcheck="false">
+      digraph G {
+        subgraph cluster_0 {
+          style=filled;
+          color=lightgrey;
+          node [style=filled,color=white];
+          a0 -> a1 -> a2 -> a3;
+          label = "Cluster 0";
+
+          subgraph cluster_0_1 {
+            style=filled;
+            color=lightblue;
+            node [style=filled,color=white];
+            a0_1 -> a1_1 -> a2_1 -> a3_1;
+            label = "Cluster 0_1";
+          }
+        }
+
+        subgraph cluster_1 {
+          node [style=filled];
+          b0 -> b1 -> b2 -> b3;
+          label = "Cluster 1";
+          color=blue;
+        
+          subgraph cluster_1_1 {
+            style=filled;
+            color=lightblue;
+            node [style=filled,color=white];
+            b0_1 -> b1_1 -> b2_1 -> b3_1;
+            label = "Cluster 1_1";
+          }
+        }
+
+        start -> a0;
+        start -> b0;
+        a1 -> b3;
+        b2 -> a3;
+        a3 -> a0;
+        a3 -> end;
+        b3 -> end;
+        a0_1 -> b0_1;
+        start [shape=Mdiamond];
+        end [shape=Msquare];
+      }
+    </textarea>
+    <button id="update-dot-src">Update Graph</button>
+  </div>
+  <div id="svg-container">
+    <div id="graph-container"></div>
+  </div>
+
+<script type="module">
+  import "https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.4/dist/graphlib-dot.min.js";
+  import { Graphviz } from "https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/graphviz.js";
+ 
+  let graph;
+  let graphviz;
+  let originalGraph;
+  const collapsedClusters = new Set();
+  let highlightedNode = null;
+
+  async function initializeGraphviz() {
+    try {
+      graphviz = await Graphviz.load();
+    } catch (error) {
+      console.error("Error loading Graphviz:", error);
+      document.getElementById("graph-container").innerHTML = "Error loading Graphviz. Please check the console for details.";
+    }
+  }
+
+ function parseAndRenderGraph(dotSrc) {
+    try {
+      graph = graphlibDot.read(dotSrc);
+      originalGraph = graphlibDot.read(dotSrc); // Keep a copy of the original graph
+      console.log("Graph structure:", graph);
+      renderGraph(dotSrc);
+    } catch (error) {
+      console.error("Error parsing DOT source:", error);
+      document.getElementById("graph-container").innerHTML = "Error parsing DOT source. Please check the console for details.";
+    }
+  }
+
+  async function renderGraph(dotSrc) {
+    try {
+      const svg = await graphviz.layout(dotSrc, "svg", "dot");
+      document.getElementById("graph-container").innerHTML = svg;
+
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svg, "image/svg+xml");
+      const svgElement = svgDoc.documentElement;
+
+      const width = svgElement.getAttribute("width");
+      const height = svgElement.getAttribute("height");
+
+      const svgContainer = document.getElementById("svg-container");
+      svgContainer.setAttribute("width", width);
+      svgContainer.setAttribute("height", height);
+
+      addClusterEventListeners();
+      addNodeEventListeners();
+      animateGraphChanges();
+    } catch (error) {
+      console.error("Error rendering graph:", error);
+      document.getElementById("graph-container").innerHTML = "Error rendering graph. Please check the console for details.";
+    }
+  }
+
+  function addClusterEventListeners() {
+    const clusters = document.querySelectorAll("g[class^='cluster']");
+    clusters.forEach(cluster => {
+      cluster.addEventListener("click", () => {
+        const titleElement = cluster.querySelector("title");
+        if (titleElement) {
+          const clusterId = titleElement.textContent.trim();
+          toggleCluster(clusterId);
+        }
+      });
+    });
+  }
+
+ function addNodeEventListeners() {
+    const nodes = document.querySelectorAll(".node");
+    nodes.forEach(node => {
+      node.addEventListener("click", (event) => {
+        event.stopPropagation(); // Prevent cluster click event from firing
+        const titleElement = node.querySelector("title");
+        if (titleElement) {
+          const nodeId = titleElement.textContent.trim();
+          toggleHighlightConnectedEdges(nodeId);
+        }
+      });
+    });
+  }
+
+ function toggleHighlightConnectedEdges(nodeId) {
+    if (highlightedNode === nodeId) {
+      // If clicking the same node, remove highlighting
+      removeHighlighting();
+      highlightedNode = null;
+    } else {
+      // Remove previous highlighting
+      removeHighlighting();
+      // Highlight new node and its edges
+      highlightConnectedEdges(nodeId);
+      highlightedNode = nodeId;
+    }
+    renderGraph(graphlibDot.write(graph));
+  }
+
+  function highlightConnectedEdges(nodeId) {
+    const connectedEdges = graph.nodeEdges(nodeId);
+    connectedEdges.forEach(edge => {
+      // Use edge.v and edge.w to get the source and target nodes
+      const edgeObj = graph.edge(edge.v, edge.w);
+      if (edgeObj) {
+        // Store the original style
+        edgeObj.originalStyle = edgeObj.style || '';
+        edgeObj.originalColor = edgeObj.color || '';
+        edgeObj.originalPenwidth = edgeObj.penwidth || '1';
+        
+        // Set new style for highlighting
+        edgeObj.style = 'bold';
+        edgeObj.color = 'red';
+        edgeObj.penwidth = '2';
+      }
+    });
+  }
+
+   function removeHighlighting() {
+    if (highlightedNode) {
+      const connectedEdges = graph.nodeEdges(highlightedNode);
+      connectedEdges.forEach(edge => {
+        const edgeObj = graph.edge(edge.v, edge.w);
+        if (edgeObj) {
+          // Restore original style
+          edgeObj.style = edgeObj.originalStyle || '';
+          edgeObj.color = edgeObj.originalColor || '';
+          edgeObj.penwidth = edgeObj.originalPenwidth || '1';
+          
+          // Clean up temporary properties
+          delete edgeObj.originalStyle;
+          delete edgeObj.originalColor;
+          delete edgeObj.originalPenwidth;
+        }
+      });
+    }
+  }
+
+  function animateGraphChanges() {
+    const nodes = document.querySelectorAll(".node");
+    const edges = document.querySelectorAll(".edge");
+
+    // Animate nodes
+    nodes.forEach(node => {
+      node.style.opacity = 0;
+      node.style.transition = "opacity 2s";
+      setTimeout(() => {
+        node.style.opacity = 1;
+      }, 10);
+    
+      // Animate label
+      const label = node.querySelector("text");
+      if (label) {
+        label.style.opacity = "0";
+        setTimeout(() => {
+          label.style.opacity = "1";
+        }, 300);
+      }
+    });
+
+    // Animate edges
+    edges.forEach(edge => {
+      animateEdge(edge);
+    });
+  }
+
+  function animateEdge(edge) {
+    var path = edge.querySelector('path');
+    var length = path.getTotalLength();
+    // Clear any previous transition
+    path.style.transition = path.style.WebkitTransition = 'none';
+    // Set up the starting positions
+    path.style.strokeDasharray = length + ' ' + length;
+    path.style.strokeDashoffset = length;
+    // Trigger a layout reflow
+    path.getBoundingClientRect();
+    // Define the transition
+    path.style.transition = path.style.WebkitTransition = 'stroke-dashoffset 2s ease-in-out';
+    // Go!
+    path.style.strokeDashoffset = '0';
+  }
+
+  function toggleCluster(clusterId) {
+    console.log(`Toggling cluster: ${clusterId}`);
+    if (!graph.hasNode(clusterId)) {
+      console.error(`Cluster ${clusterId} not found in the graph`);
+      return;
+    }
+
+    if (collapsedClusters.has(clusterId)) {
+      expandCluster(clusterId);
+    } else {
+      collapseCluster(clusterId);
+    }
+    console.log(graphlibDot.write(graph));
+    renderGraph(graphlibDot.write(graph));
+  }
+
+function getHighestCollapsedParent(nodeId) {
+  let currentNode = nodeId;
+  console.log(`Starting cluster determination for node ${nodeId}`);
+  // Iterate up through parent clusters with a fixed maximum depth to prevent infinite loops
+  const maxDepth = 10; // A reasonable limit to prevent excessive iterations
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const parentCluster = originalGraph.parent(currentNode);
+    
+    if (!parentCluster) {
+      console.log(`Determined cluster ${currentNode}`);
+      return currentNode;
+    }
+    
+    if (!collapsedClusters.has(parentCluster)) {
+      if (graph.hasNode(currentNode)) {
+        console.log(`Determined cluster ${currentNode}`);
+        return currentNode;
+      } else {
+        // If the current node doesn't exist in the graph, return its parent
+        console.log(`Node ${currentNode} doesn't exist, returning parent ${parentCluster}`);
+        return parentCluster;
+      }
+    }
+    
+    // Move to the collapsed node of the parent cluster
+	if (collapsedClusters.has(originalGraph.parent(parentCluster))) {
+    currentNode = `${parentCluster}`;
+	}
+	else{
+	currentNode = `${parentCluster}_collapsed`;
+	}
+  }
+
+  // If maximum depth is reached, log an error
+  console.error(`Maximum depth reached while finding the highest collapsed parent for node ${nodeId}`);
+  console.log(`Determined cluster ${currentNode}`);
+  return currentNode;
+}
+
+
+function expandCluster(clusterId) {
+  console.log(`Expanding cluster: ${clusterId}`);
+  
+  const collapsedNodeId = `${clusterId}_collapsed`;
+  const clusterNodes = originalGraph.children(clusterId);
+
+  // Restore nodes
+  clusterNodes.forEach(nodeId => {
+    const nodeAttrs = originalGraph.node(nodeId);
+    graph.setNode(nodeId, nodeAttrs);
+    graph.setParent(nodeId, clusterId);
+
+    // Recursively expand subclusters
+    if (originalGraph.children(nodeId).length > 0) {
+      expandCluster(nodeId);
+    }
+  });
+
+  // Remove all edges connected to the collapsed node
+  graph.edges().forEach(edge => {
+    if (edge.v === collapsedNodeId || edge.w === collapsedNodeId) {
+      console.log(`Removing edge connected to collapsed node ${collapsedNodeId}`);
+      graph.removeEdge(edge.v, edge.w);
+    }
+  });
+
+  // Remove the collapsed node
+  graph.removeNode(collapsedNodeId);
+  
+  // Update the cluster node
+  graph.node(clusterId).collapsed = false;
+
+  // Remove the collapsed state
+  collapsedClusters.delete(clusterId);
+
+  // Restore original edges, ensuring we do not create invalid edges
+  originalGraph.edges().forEach(edge => {
+    if (clusterNodes.includes(edge.v) || clusterNodes.includes(edge.w)) {
+      const sourceNode = getHighestCollapsedParent(edge.v);
+      const targetNode = getHighestCollapsedParent(edge.w);
+
+      // Only add the edge if both nodes are valid
+      if (graph.hasNode(sourceNode) && graph.hasNode(targetNode)) {
+        const edgeAttrs = originalGraph.edge(edge);
+        console.log(`Restoring edge from ${sourceNode} to ${targetNode}`);
+        graph.setEdge(sourceNode, targetNode, edgeAttrs);
+      }
+    }
+  });
+
+  console.log(`Cluster ${clusterId} expanded`);
+}
+
+function collapseCluster(clusterId, isTopLevel = true) {
+  console.log(`Collapsing cluster: ${clusterId}`);
+  
+  // Collect all nodes from the cluster and its subclusters
+  const allClusterNodes = Array.from(collectAllNodes(clusterId));
+
+  // Store the collapsed state
+  collapsedClusters.add(clusterId);
+
+  // Also add all subclusters to collapsedClusters
+  const subclusters = getSubclusters(clusterId);
+  subclusters.forEach(subcluster => collapsedClusters.add(subcluster));
+
+  if (isTopLevel) {
+    // Create a new collapsed node only for the highest level cluster
+    const collapsedNodeId = `${clusterId}_collapsed`;
+    graph.setNode(collapsedNodeId, {
+      label: `${graph.node(clusterId).label}\n(collapsed)`,
+      shape: 'rectangle',
+      style: 'filled,dashed'
+    });
+    graph.setParent(collapsedNodeId, clusterId);
+
+    // Redirect edges
+    redirectEdgesToCollapsedNode(clusterId, collapsedNodeId, allClusterNodes);
+  }
+
+  // Remove original nodes
+  allClusterNodes.forEach(nodeId => graph.removeNode(nodeId));
+
+  // Update the cluster node
+  graph.node(clusterId).collapsed = true;
+
+  console.log(`Cluster ${clusterId} collapsed`);
+}
+
+function getSubclusters(clusterId) {
+  const subclusters = [];
+  function collectSubclusters(id) {
+    const children = originalGraph.children(id);
+    children.forEach(childId => {
+      if (originalGraph.children(childId).length > 0) {
+        subclusters.push(childId);
+        collectSubclusters(childId);
+      }
+    });
+  }
+  collectSubclusters(clusterId);
+  return subclusters;
+}
+
+function redirectEdgesToCollapsedNode(clusterId, collapsedNodeId, allClusterNodes) {
+  graph.edges().forEach(edge => {
+    console.log(`Processing edge from ${edge.v} to ${edge.w}`);
+    if (allClusterNodes.includes(edge.v) && !allClusterNodes.includes(edge.w)) {
+      // Outgoing edge from cluster or subcluster
+      const targetNode = edge.w;
+      const targetCluster = graph.parent(targetNode);
+      if (targetCluster && collapsedClusters.has(targetCluster)) {
+        // Target node is in a collapsed cluster, redirect to its collapsed node
+        console.log(`Redirecting edge from ${edge.v} to ${targetCluster}_collapsed`);
+        graph.removeEdge(edge.v, edge.w);
+        graph.setEdge(collapsedNodeId, `${targetCluster}_collapsed`, graph.edge(edge));
+      } else {
+        // Target node is not in a collapsed cluster
+        console.log(`Redirecting edge from ${edge.v} to ${targetNode}`);
+        graph.removeEdge(edge.v, edge.w);
+        graph.setEdge(collapsedNodeId, targetNode, graph.edge(edge));
+      }
+    } else if (!allClusterNodes.includes(edge.v) && allClusterNodes.includes(edge.w)) {
+      // Incoming edge to cluster or subcluster
+      const sourceNode = edge.v;
+      const sourceCluster = graph.parent(sourceNode);
+      if (sourceCluster && collapsedClusters.has(sourceCluster)) {
+        // Source node is in a collapsed cluster, redirect from its collapsed node
+        console.log(`Redirecting edge from ${sourceCluster}_collapsed to ${collapsedNodeId}`);
+        graph.removeEdge(edge.v, edge.w);
+        graph.setEdge(`${sourceCluster}_collapsed`, collapsedNodeId, graph.edge(edge));
+      } else {
+        // Source node is not in a collapsed cluster
+        console.log(`Redirecting edge from ${sourceNode} to ${collapsedNodeId}`);
+        graph.removeEdge(edge.v, edge.w);
+        graph.setEdge(sourceNode, collapsedNodeId, graph.edge(edge));
+      }
+    }
+  });
+}
+
+function collectAllNodes(clusterId, collectedNodes = new Set()) {
+  const nodes = graph.children(clusterId);
+
+  nodes.forEach(nodeId => {
+    if (!collectedNodes.has(nodeId)) {
+      collectedNodes.add(nodeId);
+      if (graph.children(nodeId).length > 0) {
+        // Recursively collect nodes from subclusters
+        collectAllNodes(nodeId, collectedNodes);
+      }
+    }
+  });
+
+  return collectedNodes;
+}
+
+
+   // Initialize and set up event listeners
+  async function initialize() {
+    await initializeGraphviz();
+    
+    const initialDotSrc = document.getElementById('dot-src').value;
+    parseAndRenderGraph(initialDotSrc);
+
+    document.getElementById('update-dot-src').addEventListener('click', () => {
+      const dotSrc = document.getElementById('dot-src').value;
+      parseAndRenderGraph(dotSrc);
+    });
+  }
+
+  // Call initialize 
+  initialize();
+
+</script>
+</body>
+</html>
