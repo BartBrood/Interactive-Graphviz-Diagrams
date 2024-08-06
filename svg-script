@@ -10,43 +10,41 @@
 }-->
 .text-highlight-nodes text{
     opacity: 1 !important;
-    stroke-width: 10;
-    font-size: 20px;
+    stroke-width: 2;
     font-weight: bold;
     fill: black;
 }
 .text-highlight-edges text{
     opacity: 1 !important;
-    stroke-width: 10;
-    font-size: 20px;
+    stroke-width: 2;
     font-weight: bold;
     fill: Indigo;
 }
 .edge-highlight path{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
 }	
 .edge-highlight polygon{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
 }
 .node-highlight polygon{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
     z-index:99999;	
 }
 .node-highlight ellipse{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
     z-index:99999;	
 }
 .node-highlight path{
     opacity: 1;
-    stroke-width: 10;
+    stroke-width: 2;
     stroke: crimson;
     z-index:99999;	
 }
@@ -71,7 +69,7 @@
         }
 </style>
 <script>
-<![CDATA[
+//<![CDATA[
 function addInteractivity(evt) {
     
 	var svg = evt.target;
@@ -172,13 +170,13 @@ function addInteractivity(evt) {
             }
         }	
     }
-function clickNode() {
+function clickNode(event) {
     if (nodrag) {
         var nodeName = this.childNodes[1].textContent;
         // Escape special characters in the node name
         var nodeNameEscaped = nodeName.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
 
-        var patroon = new RegExp('^' + nodeNameEscaped + '->|->' + nodeNameEscaped + '$|' + nodeNameEscaped + '--|--' + nodeNameEscaped + '$')
+        var patroon = new RegExp('^' + nodeNameEscaped + '(:\\w+)*->|->' + nodeNameEscaped + '(:\\w+)*$|^' + nodeNameEscaped + '(:\\w+)*--|--' + nodeNameEscaped + '(:\\w+)*$')
 
         if (this.classList.contains("node-highlight")) {
             this.classList.remove("node-highlight");
@@ -202,31 +200,38 @@ function clickNode() {
                 }
             }
         }
+        // Prevent opening a possible URL attached to the node
+        // Note that the URL can still be opened with browser contextual menu (right-click)
+        event.preventDefault()
     }
 }
 function animateEdge(edge){
-		var path = edge.querySelector('path');
-		var polygon = edge.querySelector('polygon');
-		var length = path.getTotalLength();
-		// Clear any previous transition
-		path.style.transition = path.style.WebkitTransition = 'none';
-		if (polygon){polygon.style.transition = polygon.style.WebkitTransition = 'none';};
-		// Set up the starting positions
-		path.style.strokeDasharray = length + ' ' + length;
-		path.style.strokeDashoffset = length;
-		if(polygon){polygon.style.opacity='0';};
-		// Trigger a layout so styles are calculated & the browser
-		// picks up the starting position before animating
-		path.getBoundingClientRect();
-		// Define our transition
-		path.style.transition = path.style.WebkitTransition =
-		'stroke-dashoffset 2s ease-in-out';
-		if (polygon){polygon.style.transition = polygon.style.WebkitTransition =
-		'fill-opacity 1s ease-in-out 2s';};
-		// Go!
-		path.style.strokeDashoffset = '0';
-        if (polygon){setTimeout(function(){polygon.style.opacity='1';},2000)};
-	}
+    let pathList = edge.querySelectorAll('path');
+    for (let i = 0; i < pathList.length; i++) {
+        let path = pathList[i];
+        let length = path.getTotalLength();
+        // Clear any previous transition
+        path.style.transition = path.style.WebkitTransition = 'none';
+        // Set up the starting positions
+        path.style.strokeDasharray = length + ' ' + length;
+        path.style.strokeDashoffset = length;
+        // Trigger a layout so styles are calculated & the browser
+        // picks up the starting position before animating
+        path.getBoundingClientRect();
+        // Define our transition
+        path.style.transition = path.style.WebkitTransition = 'stroke-dashoffset 2s ease-in-out';
+        path.style.strokeDashoffset = '0';
+    }
+    let polygonList = edge.querySelectorAll('polygon');
+    for (let i = 0; i < polygonList.length; i++) {
+        let polygon = polygonList[i];
+        polygon.style.transition = polygon.style.WebkitTransition = 'none';
+        polygon.style.opacity='0';
+        polygon.style.transition = polygon.style.WebkitTransition = 'fill-opacity 1s ease-in-out 2s';
+        setTimeout(function(){polygon.style.opacity='1';},2000)
+    }
+}
+
 	function addzoomers(cluster){
 
 		var bb = cluster.getBBox();
@@ -593,5 +598,5 @@ function adjustViewBox(svg) {
   var newViewBox = viewBoxParts[0] + " " + newYMin + " " + newXMax + " " + newYMax;
   svg.setAttribute("viewBox", newViewBox);
 }
-]]>
+//]]>
 </script>
