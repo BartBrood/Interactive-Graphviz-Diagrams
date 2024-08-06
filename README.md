@@ -1,5 +1,9 @@
 # dynamic-SVG-from-Graphviz
-javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser.
+
+2 versions exist in this repository:
+
+1. javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
+2. HTML version receiving dot source code rendering the graph locally using graphviz WASM library (only has cluster collapse/expand and edge highlighting for now).
 
 ## Features
 
