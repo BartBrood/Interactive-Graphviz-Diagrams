@@ -3,8 +3,9 @@
 2 versions exist in this repository:
 
 1. javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
-2. HTML version receiving dot source code rendering the graph locally using graphviz WASM library (only has cluster collapse/expand and edge highlighting for now).
-
+2. HTML version receiving dot source code rendering the graph locally using graphviz WASM library (only has cluster collapse/expand and edge highlighting for now). This version takes a different approach, it loads the dot source code into a grap object using the graphlib-dot parser read method, applies changes to the graph object (highlight edges, collapse and expand clusters) and then writes the graph back to dot source code using the graphlib-dot write method and provides the new dot source code to the Grahviz WASM library. 
+graphlibdot: https://github.com/dagrejs/graphlib-dot?tab=readme-ov-file
+graphviz Wasm: https://github.com/hpcc-systems/hpcc-js-wasm/
 ## Features
 
 The following features are currently added:
