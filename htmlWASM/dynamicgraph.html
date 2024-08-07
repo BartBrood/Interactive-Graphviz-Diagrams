@@ -186,9 +186,10 @@
     });
   }
 
-   function removeHighlighting() {
+  function removeHighlighting() {
     if (highlightedNode) {
       const connectedEdges = graph.nodeEdges(highlightedNode);
+	  if (connectedEdges) {
       connectedEdges.forEach(edge => {
         const edgeObj = graph.edge(edge.v, edge.w);
         if (edgeObj) {
@@ -203,6 +204,7 @@
           delete edgeObj.originalPenwidth;
         }
       });
+	 } 
     }
   }
 
