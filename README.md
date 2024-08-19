@@ -44,9 +44,15 @@ graphlibdot: https://github.com/dagrejs/graphlib-dot?tab=readme-ov-file
 graphviz Wasm: https://github.com/hpcc-systems/hpcc-js-wasm/
 
 features:
+
 -node click: highlight edges
+
 -cluster click collapse/expand cluster, redraw edges to collapsed node for cluster, collapse /expand all subclusters.
+
 -facetted navigation (cluster tree is shown and classes are shown):
+
     -cluster collapse /Expand after applying filter
+    
     -class hide:  remove/add all elements that have class from diagram
+    
     -class highlight: highlight all elements on graph having class.
