@@ -191,7 +191,7 @@
     try {
       graph = graphlibDot.read(dotSrc);
       originalGraph = graphlibDot.read(dotSrc); // Keep a copy of the original graph
-      console.log("Graph structure:", graph);
+      //console.log("Graph structure:", graph);
       renderGraph(dotSrc);
 	  // Populate the faceted navigation after the graph is parsed
       populateFacetedNavigation();
@@ -378,7 +378,7 @@ function animateEdge(edge){
 // Cluster Handling
 //////////////////////////////////////   
    function toggleCluster(clusterId) {
-    console.log(`Toggling cluster: ${clusterId}`);
+    //console.log(`Toggling cluster: ${clusterId}`);
     if (!graph.hasNode(clusterId)) {
       console.error(`Cluster ${clusterId} not found in the graph`);
       return;
@@ -389,12 +389,12 @@ function animateEdge(edge){
     } else {
       collapseCluster(clusterId);
     }
-    console.log(graphlibDot.write(graph));
+    //console.log(graphlibDot.write(graph));
     renderGraph(graphlibDot.write(graph));
   }
 
 function expandCluster(clusterId,isRestoring = false) {
-  console.log(`Expanding cluster: ${clusterId}`);
+  //console.log(`Expanding cluster: ${clusterId}`);
   
   const collapsedNodeId = `${clusterId}_collapsed`;
   const clusterNodes = originalGraph.children(clusterId);
@@ -414,7 +414,7 @@ function expandCluster(clusterId,isRestoring = false) {
   // Remove all edges connected to the collapsed node
   graph.edges().forEach(edge => {
     if (edge.v === collapsedNodeId || edge.w === collapsedNodeId) {
-      console.log(`Removing edge connected to collapsed node ${collapsedNodeId}`);
+      //console.log(`Removing edge connected to collapsed node ${collapsedNodeId}`);
       graph.removeEdge(edge.v, edge.w);
     }
   });
@@ -437,19 +437,19 @@ function expandCluster(clusterId,isRestoring = false) {
       // Only add the edge if both nodes are valid
       if (graph.hasNode(sourceNode) && graph.hasNode(targetNode)) {
         const edgeAttrs = originalGraph.edge(edge);
-        console.log(`Restoring edge from ${sourceNode} to ${targetNode}`);
+        //console.log(`Restoring edge from ${sourceNode} to ${targetNode}`);
         graph.setEdge(sourceNode, targetNode, edgeAttrs);
       }
     }
   });
 
-  console.log(`Cluster ${clusterId} expanded`);
+  //console.log(`Cluster ${clusterId} expanded`);
 }
 
 function collapseCluster(clusterId, removeCompletely = false) {
   
   if (!collapsedClusters.has(clusterId)){
-  console.log(`Collapsing cluster: ${clusterId}`);
+  //console.log(`Collapsing cluster: ${clusterId}`);
   
   // Collect all nodes from the cluster and its subclusters
   const allClusterNodes = Array.from(collectAllNodes(clusterId));
@@ -481,7 +481,7 @@ function collapseCluster(clusterId, removeCompletely = false) {
   // Update the cluster node
   graph.node(clusterId).collapsed = true;
 
-  console.log(`Cluster ${clusterId} collapsed`);
+  //console.log(`Cluster ${clusterId} collapsed`);
  }
 }
 
@@ -675,21 +675,21 @@ function toggleClassVisibility(className, isVisible) {
 
 
 function applyFilters() {
-  console.log('Applying filters');
+  //console.log('Applying filters');
   // Create a new graph based on the original
-  console.log(graphlibDot.read(initialDotSrc));
+  //console.log(graphlibDot.read(initialDotSrc));
   Object.assign(graph, graphlibDot.read(initialDotSrc));
-  console.log('before filtering graph', graph);
+  //console.log('before filtering graph', graph);
   collapsedClusters.clear();
   
   // Apply cluster filters
   document.querySelectorAll('#clusters-list input').forEach(checkbox => {
     if (!checkbox.checked) {
-      console.log(`Unchecked cluster: ${checkbox.dataset.cluster}`);
+      //console.log(`Unchecked cluster: ${checkbox.dataset.cluster}`);
       collapseCluster(checkbox.dataset.cluster, false);  // true for complete removal
     }
   });
-  console.log('after cluster filter:', graph);
+  //console.log('after cluster filter:', graph);
   // Apply class filters
   const visibleClasses = new Set();
   document.querySelectorAll('#classes-list .primary-checkbox').forEach(checkbox => {
@@ -702,10 +702,10 @@ function applyFilters() {
 	}
   });
  
-  console.log('Visible classes:', visibleClasses);
+  //console.log('Visible classes:', visibleClasses);
   
-  console.log('Final filtered graph:', graph);
-  console.log (graphlibDot.write(graph));
+  //console.log('Final filtered graph:', graph);
+  //console.log (graphlibDot.write(graph));
 
   // Render the updated graph
   renderGraph(graphlibDot.write(graph));
@@ -830,24 +830,24 @@ function highlightNode(elementId,highLight) {
 
 function getHighestCollapsedParent(nodeId) {
   let currentNode = nodeId;
-  console.log(`Starting cluster determination for node ${nodeId}`);
+  //console.log(`Starting cluster determination for node ${nodeId}`);
   // Iterate up through parent clusters with a fixed maximum depth to prevent infinite loops
   const maxDepth = 10; // A reasonable limit to prevent excessive iterations
   for (let depth = 0; depth < maxDepth; depth++) {
     const parentCluster = originalGraph.parent(currentNode);
     
     if (!parentCluster) {
-      console.log(`Determined cluster ${currentNode}`);
+      //console.log(`Determined cluster ${currentNode}`);
       return currentNode;
     }
     
     if (!collapsedClusters.has(parentCluster)) {
       if (graph.hasNode(currentNode)) {
-        console.log(`Determined cluster ${currentNode}`);
+        //console.log(`Determined cluster ${currentNode}`);
         return currentNode;
       } else {
         // If the current node doesn't exist in the graph, return its parent
-        console.log(`Node ${currentNode} doesn't exist, returning parent ${parentCluster}`);
+        //console.log(`Node ${currentNode} doesn't exist, returning parent ${parentCluster}`);
         return parentCluster;
       }
     }
@@ -863,7 +863,7 @@ function getHighestCollapsedParent(nodeId) {
 
   // If maximum depth is reached, log an error
   console.error(`Maximum depth reached while finding the highest collapsed parent for node ${nodeId}`);
-  console.log(`Determined cluster ${currentNode}`);
+  //console.log(`Determined cluster ${currentNode}`);
   return currentNode;
 }
 
@@ -886,19 +886,19 @@ function getSubclusters(clusterId) {
 
 function redirectEdgesToCollapsedNode(clusterId, collapsedNodeId, allClusterNodes) {
   graph.edges().forEach(edge => {
-    console.log(`Processing edge from ${edge.v} to ${edge.w}`);
+    //console.log(`Processing edge from ${edge.v} to ${edge.w}`);
     if (allClusterNodes.includes(edge.v) && !allClusterNodes.includes(edge.w)) {
       // Outgoing edge from cluster or subcluster
       const targetNode = edge.w;
       const targetCluster = graph.parent(targetNode);
       if (targetCluster && collapsedClusters.has(targetCluster)) {
         // Target node is in a collapsed cluster, redirect to its collapsed node
-        console.log(`Redirecting edge from ${edge.v} to ${targetCluster}_collapsed`);
+        //console.log(`Redirecting edge from ${edge.v} to ${targetCluster}_collapsed`);
         graph.removeEdge(edge.v, edge.w);
         graph.setEdge(collapsedNodeId, `${targetCluster}_collapsed`, graph.edge(edge));
       } else {
         // Target node is not in a collapsed cluster
-        console.log(`Redirecting edge from ${edge.v} to ${targetNode}`);
+        //console.log(`Redirecting edge from ${edge.v} to ${targetNode}`);
         graph.removeEdge(edge.v, edge.w);
         graph.setEdge(collapsedNodeId, targetNode, graph.edge(edge));
       }
@@ -908,12 +908,12 @@ function redirectEdgesToCollapsedNode(clusterId, collapsedNodeId, allClusterNode
       const sourceCluster = graph.parent(sourceNode);
       if (sourceCluster && collapsedClusters.has(sourceCluster)) {
         // Source node is in a collapsed cluster, redirect from its collapsed node
-        console.log(`Redirecting edge from ${sourceCluster}_collapsed to ${collapsedNodeId}`);
+        //console.log(`Redirecting edge from ${sourceCluster}_collapsed to ${collapsedNodeId}`);
         graph.removeEdge(edge.v, edge.w);
         graph.setEdge(`${sourceCluster}_collapsed`, collapsedNodeId, graph.edge(edge));
       } else {
         // Source node is not in a collapsed cluster
-        console.log(`Redirecting edge from ${sourceNode} to ${collapsedNodeId}`);
+        //console.log(`Redirecting edge from ${sourceNode} to ${collapsedNodeId}`);
         graph.removeEdge(edge.v, edge.w);
         graph.setEdge(sourceNode, collapsedNodeId, graph.edge(edge));
       }
