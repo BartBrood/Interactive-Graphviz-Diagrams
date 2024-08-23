@@ -28,7 +28,7 @@
 
     /* Faceted navigation on the left */
     #faceted-navigation {
-      width: 200px;
+      width: 250px;
       padding-right: 20px;
       display: flex;
       flex-direction: column;
@@ -40,7 +40,7 @@
       flex-grow: 1;
       overflow: auto;
       padding-left: 20px;
-      max-width: calc(100% - 240px); /* Adjusted width */
+      max-width: calc(100% - 290px); /* Adjusted width */
 	  border-left: 1px solid #ccc;
     }
 
@@ -62,12 +62,46 @@
     #apply-filter-button {
       margin-top: auto;
     }
+	
+	   .slider-container {
+      width: 100%;
+      margin-top: 10px;
+    }
+    .slider {
+      -webkit-appearance: none;
+      width: 90%;
+      height: 15px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #4CAF50;
+      cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #4CAF50;
+      cursor: pointer;
+    }
 
     .cluster { cursor: pointer; }
     .cluster:hover { opacity: 0.8; }
     .cluster-collapsed { stroke-width: 2px; stroke-dasharray: 5, 5; }
     .node { cursor: pointer; }
     .node ellipse, .node polygon, .node rect { transition: all 0.5s ease-in-out; }
+	
+	
   </style>
 </head>
 <body>
@@ -75,18 +109,19 @@
     <!-- Full width dot source container -->
     <div id="dot-src-container">
       <textarea id="dot-src" spellcheck="false">
-        digraph G {
+                digraph G {
           subgraph cluster_0 {
             style=filled;
-			class="group1 test";
+			class="a-side 2000";
             color=lightgrey;
             node [style=filled,color=white];
             a0 -> a1 -> a2 -> a3;
             label = "Cluster 0";
-			a0 [class="test2"];
-			a3 [class="test2"];
+			a0 [class="somenodes"];
+			a3 [class="somenodes"];
 
             subgraph cluster_0_1 {
+			  class="a-side 2003";
               style=filled;
               color=lightblue;
               node [style=filled,color=white];
@@ -96,12 +131,14 @@
           }
 
           subgraph cluster_1 {
+            class="b-side 2005";
             node [style=filled];
             b0 -> b1 -> b2 -> b3;
             label = "Cluster 1";
             color=blue;
 
             subgraph cluster_1_1 {
+              class="b-side 2008";
               style=filled;
               color=lightblue;
               node [style=filled,color=white];
@@ -132,15 +169,19 @@
       <!-- Faceted navigation on the left -->
       <div id="faceted-navigation">
         <button id="apply-filter-button">Apply Filter</button>
-		<h3>Toggle Clusters</h3>
-			<div class="scroll-container">
-				<div id="clusters-list"></div>
-			</div>
-		<h3>Hide/Highlight Classes</h3>
-			<div class="scroll-container">
-				<div id="classes-list"></div>
-			</div>
-		</div>
+        <h3>Toggle Clusters</h3>
+        <div class="scroll-container">
+          <div id="clusters-list"></div>
+        </div>
+        <h3>Hide/Highlight</h3>
+        <div class="scroll-container">
+          <div id="numerical-classes-list"></div>
+        </div>
+        <h3>Hide/Highlight Categories</h3>
+        <div class="scroll-container">
+          <div id="alphanumeric-classes-list"></div>
+        </div>
+      </div>
       <!-- SVG container on the right -->
       <div id="svg-container">
         <div id="graph-container"></div>
@@ -488,56 +529,114 @@ function collapseCluster(clusterId, removeCompletely = false) {
 //////////////////////////////////////
 // Faceted Navigation
 //////////////////////////////////////   
-function populateFacetedNavigation() {
-  const clustersList = document.getElementById('clusters-list');
-  const classesList = document.getElementById('classes-list');
+    function populateFacetedNavigation() {
+      const clustersList = document.getElementById('clusters-list');
+      const numericalClassesList = document.getElementById('numerical-classes-list');
+      const alphanumericClassesList = document.getElementById('alphanumeric-classes-list');
 
-  // Clear existing lists
-  clustersList.innerHTML = '';
-  classesList.innerHTML = '';
+      // Clear existing lists
+      clustersList.innerHTML = '';
+      numericalClassesList.innerHTML = '';
+      alphanumericClassesList.innerHTML = '';
 
-  // Create a tree structure for clusters
-  const clusterTree = createClusterTree();
+      // Create a tree structure for clusters
+      const clusterTree = createClusterTree();
 
-  // Render the cluster tree
-  renderClusterTree(clusterTree, clustersList);
+      // Render the cluster tree
+      renderClusterTree(clusterTree, clustersList);
 
-  // Get all unique classes from nodes, edges, and clusters
-  const classes = new Set();
+      // Get all unique classes from nodes, edges, and clusters
+      const classes = new Set();
+      
+      // Nodes and clusters
+	  graph.nodes().forEach(nodeId => {
+		const classAttr = graph.node(nodeId).class;
+		if (classAttr) {
+		  classAttr.split(' ').forEach(cls => classes.add(cls));
+		}
+	  });
+
+	  // Edges
+	  graph.edges().forEach(edge => {
+		const classAttr = graph.edge(edge.v, edge.w).class;
+		if (classAttr) {
+		  classAttr.split(' ').forEach(cls => classes.add(cls));
+		}
+	  });
+
+      // Separate numerical and alphanumeric classes
+      const numericalClasses = [];
+      const alphanumericClasses = [];
+
+      classes.forEach(cls => {
+        if (/^\d+$/.test(cls)) {
+          numericalClasses.push(parseInt(cls, 10));
+        } else {
+          alphanumericClasses.push(cls);
+        }
+      });
+
+      // Sort numerical classes
+      numericalClasses.sort((a, b) => a - b);
+
+      // Sort alphanumeric classes alphabetically
+      alphanumericClasses.sort();
+
+      // Render numerical classes with a slider
+  if (numericalClasses.length > 0) {
+  const min = numericalClasses[0];
+  const max = numericalClasses[numericalClasses.length - 1];
   
-  // Nodes and clusters
-  graph.nodes().forEach(nodeId => {
-    const classAttr = graph.node(nodeId).class;
-    if (classAttr) {
-      classAttr.split(' ').forEach(cls => classes.add(cls));
-    }
+  // Create the slider
+  numericalClassesList.innerHTML = `
+    <div class="slider-container">
+      <input type="range" min="${min}" max="${max}" value="${max}" class="slider" id="numerical-class-slider">
+      <p>Selected value: <span id="slider-value">${max}</span></p>
+    </div>
+  `;
+
+  // Create checkboxes for each numerical class
+  numericalClasses.forEach(cls => {
+    numericalClassesList.innerHTML += `
+      <label>
+        <input type="checkbox" checked data-class="${cls}" class="primary-checkbox"> ${cls}
+      </label>
+	   <label>
+            <input type="checkbox" unchecked data-class="${cls}" class="secondary-checkbox">
+       </label><br>
+      <br>
+    `;
   });
 
-  // Edges
-  graph.edges().forEach(edge => {
-    const classAttr = graph.edge(edge.v, edge.w).class;
-    if (classAttr) {
-      classAttr.split(' ').forEach(cls => classes.add(cls));
-    }
-  });
+  const slider = document.getElementById('numerical-class-slider');
+  
+  slider.oninput = function() {
+    applyNumericalClassFilter(this.value);
+  };
+  }
 
-  classes.forEach(cls => {
-    classesList.innerHTML += `
-	 <label>
-      <input type="checkbox" checked data-class="${cls}" class="primary-checkbox"> ${cls}
-    </label>
-    <label>
-      <input type="checkbox" unchecked data-class="${cls}" class="secondary-checkbox">
-    </label><br>
-	`;
-  });
+      // Render alphanumeric classes
+      alphanumericClasses.forEach(cls => {
+        alphanumericClassesList.innerHTML += `
+          <label>
+            <input type="checkbox" checked data-class="${cls}" class="primary-checkbox"> ${cls}
+          </label>
+          <label>
+            <input type="checkbox" unchecked data-class="${cls}" class="secondary-checkbox">
+          </label><br>
+        `;
+      });
 
    // Add event listeners for checkboxes
   document.querySelectorAll('#clusters-list input').forEach(checkbox => {
     checkbox.addEventListener('change', () => toggleSubclusters(checkbox.dataset.cluster, checkbox.checked));
   });
   // Add event listeners for secondary checkboxes
-  document.querySelectorAll('#classes-list .secondary-checkbox').forEach(checkbox => {
+  document.querySelectorAll('#alphanumeric-classes-list .secondary-checkbox').forEach(checkbox => {
+  checkbox.addEventListener('change', () => highlightClass(checkbox.dataset.class, checkbox.checked));
+  });
+    // Add event listeners for secondary checkboxes
+  document.querySelectorAll('#numerical-classes-list .secondary-checkbox').forEach(checkbox => {
   checkbox.addEventListener('change', () => highlightClass(checkbox.dataset.class, checkbox.checked));
   });
 	// Add event listener for the "Apply Filter" button
@@ -547,6 +646,29 @@ function populateFacetedNavigation() {
 	} else {
 	  console.error('Apply Filter button not found in the DOM');
 	}
+	// Add event listener for the numerical class slider
+      const slider = document.getElementById('numerical-class-slider');
+      if (slider) {
+        slider.addEventListener('change', () => applyNumericalClassFilter(slider.value));
+      }
+}
+
+function applyNumericalClassFilter(maxValue) {
+  // Get all primary checkboxes for numerical classes
+  const numericalCheckboxes = document.querySelectorAll('#numerical-classes-list .primary-checkbox');
+  
+  numericalCheckboxes.forEach(checkbox => {
+    const classValue = parseInt(checkbox.dataset.class, 10);
+    if (!isNaN(classValue)) {
+      // If the class value is less than or equal to maxValue, check the box; otherwise, uncheck it
+      checkbox.checked = classValue <= maxValue;
+    }
+  });
+  // Update the displayed value
+  const sliderValue = document.getElementById('slider-value');
+  if (sliderValue) {
+    sliderValue.textContent = maxValue;
+  }
 }
 
 function createClusterTree() {
@@ -603,6 +725,7 @@ function toggleClassVisibility(className, isVisible) {
 
     // Remove identified clusters and their children
     clustersToRemove.forEach(clusterId => {
+	  if(graph.hasNode(clusterId)){
       const childNodes = collectAllNodes(clusterId);
       childNodes.forEach(childId => {
         const connectedEdges = graph.nodeEdges(childId);
@@ -612,7 +735,8 @@ function toggleClassVisibility(className, isVisible) {
         graph.removeNode(childId);
       });
       graph.removeNode(clusterId);
-    });
+     }
+	});
 
     // Identify nodes to remove
     const nodesToRemove = graph.nodes().filter(nodeId => {
@@ -692,7 +816,17 @@ function applyFilters() {
   //console.log('after cluster filter:', graph);
   // Apply class filters
   const visibleClasses = new Set();
-  document.querySelectorAll('#classes-list .primary-checkbox').forEach(checkbox => {
+  document.querySelectorAll('#alphanumeric-classes-list .primary-checkbox').forEach(checkbox => {
+    if (checkbox.checked) {
+      visibleClasses.add(checkbox.dataset.class);
+    }
+	else
+	{
+	toggleClassVisibility(checkbox.dataset.class,false);
+	}
+  });
+  
+  document.querySelectorAll('#numerical-classes-list .primary-checkbox').forEach(checkbox => {
     if (checkbox.checked) {
       visibleClasses.add(checkbox.dataset.class);
     }
