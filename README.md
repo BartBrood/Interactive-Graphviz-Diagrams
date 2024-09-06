@@ -1,4 +1,4 @@
-# dynamic-SVG-from-Graphviz
+# Interactive Graphviz diagrams
 
 2 versions exist in this repository:
 
