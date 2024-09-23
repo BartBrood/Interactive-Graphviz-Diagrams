@@ -12,6 +12,7 @@ graphlibdot: https://github.com/dagrejs/graphlib-dot?tab=readme-ov-file
 graphviz Wasm: https://github.com/hpcc-systems/hpcc-js-wasm/
 
 features:
+-load csv files with nodes , edges and formatting from csv format into dot syntax, select properties of nodes for being used as cluster, subcluster and class highlighters.
 
 -node click: highlight edges
 
