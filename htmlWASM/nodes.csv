@@ -1,0 +1,19 @@
+Node,Category,division,introduced,side
+a0_1,Cluster 0,Cluster 0_1,2000,a-side
+a1_1,Cluster 0,Cluster 0_1,2000,a-side
+a2_1,Cluster 0,Cluster 0_1,2000,a-side
+a3_1,Cluster 0,Cluster 0_1,2000,a-side
+a0,Cluster 0,,2003,a-side
+a1,Cluster 0,,2003,a-side
+a2,Cluster 0,,2003,a-side
+a3,Cluster 0,,2003,a-side
+b0_1,Cluster 1,Cluster 1_1,2008,b-side
+b1_1,Cluster 1,Cluster 1_1,2008,b-side
+b2_1,Cluster 1,Cluster 1_1,2008,b-side
+b3_1,Cluster 1,Cluster 1_1,2008,b-side
+b0,Cluster 1,,2006,b-side
+b1,Cluster 1,,2006,b-side
+b2,Cluster 1,,2006,b-side
+b3,Cluster 1,,2006,b-side
+start,,2000,
+end,,2000,
