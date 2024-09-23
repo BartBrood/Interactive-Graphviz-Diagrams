@@ -100,12 +100,77 @@
     .cluster-collapsed { stroke-width: 2px; stroke-dasharray: 5, 5; }
     .node { cursor: pointer; }
     .node ellipse, .node polygon, .node rect { transition: all 0.5s ease-in-out; }
-	
+	  #file-input-container, #property-selector-container {
+      margin-bottom: 20px;
+    }
+    .property-selector {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    .property-selector label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .property-selector button {
+      margin-top: 10px;
+    }
+	#toggle-file-based-graph {
+	  margin-bottom: 10px;
+	  padding: 5px 10px;
+	  background-color: #f0f0f0;
+	  border: 1px solid #ccc;
+	  cursor: pointer;
+
+  }
+          #file-based-graph-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        .file-input-container {
+            flex: 1 1 auto;
+            min-width: 200px;
+            text-align: center;
+        }
+        .file-input-header {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        #generate-graph {
+            flex-basis: 100%;
+            margin-top: 20px;
+        }
+        #property-selector-container {
+            flex-basis: 100%;
+        }
 	
   </style>
 </head>
 <body>
   <div id="page-container">
+  <!-- New file input elements -->
+   <button id="toggle-file-based-graph">File Based Graph ▼</button>
+	 <div id="file-based-graph-container" style="display: none;">
+        <div class="file-input-container">
+            <span class="file-input-header">Nodes</span>
+            <input type="file" id="component-file" accept=".csv" />
+        </div>
+        <div class="file-input-container">
+            <span class="file-input-header">Edges</span>
+            <input type="file" id="relation-file" accept=".csv" />
+        </div>
+        <div class="file-input-container">
+            <span class="file-input-header">Style</span>
+            <input type="file" id="style-file" accept=".txt" />
+        </div>
+        <button id="generate-graph">Load files</button>
+        <div id="property-selector-container"></div>
+    </div>
+ 
+
     <!-- Full width dot source container -->
     <div id="dot-src-container">
       <textarea id="dot-src" spellcheck="false">
@@ -160,7 +225,7 @@
           end [shape=Msquare, fillcolor="white", color="black"];
         }
       </textarea>
-      <button id="update-dot-src">Update Graph</button>
+      <button id="update-dot-src">Update/Reset Graph</button>
       Click on Nodes to highlight/unhighlight connected edges, click on clusters to collapse/expand.
     </div>
     
@@ -169,7 +234,7 @@
       <!-- Faceted navigation on the left -->
       <div id="faceted-navigation">
         <button id="apply-filter-button">Apply Filter</button>
-        <h3>Toggle Clusters</h3>
+        <h3>Expand/Collapse Clusters</h3>
         <div class="scroll-container">
           <div id="clusters-list"></div>
         </div>
@@ -187,6 +252,12 @@
         <div id="graph-container"></div>
       </div>
     </div>
+	<div id="context-menu" style="position: fixed; z-index: 10000; background: white; border: 1px solid #ccc; padding: 5px; display: none;">
+	  <ul style="list-style-type: none; padding: 0; margin: 0;">
+		<li id="highlight-node" style="padding: 5px; cursor: pointer;">Highlight Connected Edges</li>
+		<li id="filter-graph" style="padding: 5px; cursor: pointer;">Filter Graph</li>
+	  </ul>
+    </div>
   </div>
 
 <script type="module">
@@ -199,6 +270,10 @@
   let initialDotSrc;
   const collapsedClusters = new Set();
   let highlightedNode = null;
+  
+  let components, relations;
+  let selectedProperties = [];
+  let styleConfig = {}; // New variable to store parsed style configuration
 
 //////////////////////////////////////
 // Init
@@ -219,12 +294,258 @@
     
     initialDotSrc = document.getElementById('dot-src').value;
     parseAndRenderGraph(initialDotSrc);
-
-    document.getElementById('update-dot-src').addEventListener('click', () => {
-     initialize();
-    });
   }
-  
+
+//////////////////////////////////////
+// File handling
+/////////////////////////////////////  
+
+  // Function to parse CSV content
+function parseCSV(csvContent) {
+  const lines = csvContent.split('\n');
+  const headers = lines[0].split(',').map(header => header.trim());
+  const data = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',').map(value => value.trim());
+    if (values.length === headers.length) {
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index];
+      });
+      data.push(row);
+    }
+  }
+
+  return data;
+}
+
+// Function to read CSV files
+function readCSVFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const csvContent = event.target.result;
+      const parsedData = parseCSV(csvContent);
+      resolve(parsedData);
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsText(file);
+  });
+}
+
+function generateGraph(components, relations, clusterProperties, subclusterProperties, classProperties) {
+  const graph = new graphlibDot.graphlib.Graph({ directed: true, compound: true });
+
+  // Apply graph-level styles
+  if (styleConfig.graph) {
+    const graphStyles = Object.entries(styleConfig.graph).reduce((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+    
+    graph.setGraph(graphStyles);
+  }
+
+  // Create clusters based on selected properties
+  const clusters = {};
+  components.forEach(component => {
+    const clusterKey = clusterProperties.map(prop => component[prop]).join('-');
+    const subclusterKey = subclusterProperties.map(prop => component[prop]).join('-');
+    
+    if (!clusters[clusterKey]) {
+      clusters[clusterKey] = {};
+    }
+    if (!clusters[clusterKey][subclusterKey]) {
+      clusters[clusterKey][subclusterKey] = [];
+    }
+    clusters[clusterKey][subclusterKey].push(component);
+  });
+
+  // Add clusters, subclusters, and nodes to the graph
+  Object.entries(clusters).forEach(([clusterKey, subclusters], clusterIndex) => {
+    const clusterId = `cluster_${clusterIndex}`;
+    const clusterAttrs = { label: clusterKey, ...styleConfig.cluster };
+    graph.setNode(clusterId, clusterAttrs);
+
+    Object.entries(subclusters).forEach(([subclusterKey, components], subclusterIndex) => {
+      const subclusterId = `${clusterId}_subcluster_${subclusterIndex}`;
+      const subclusterAttrs = { label: subclusterKey, ...styleConfig.subCluster };
+      graph.setNode(subclusterId, subclusterAttrs);
+      graph.setParent(subclusterId, clusterId);
+
+      components.forEach(component => {
+        // Generate class attribute based on classProperties
+        const classValues = classProperties.flatMap(prop => {
+          const value = component[prop].trim().replace(/\s+/g, '-');
+          return [`${value}`];
+        });
+        const classAttribute = classValues.join(' ');
+
+        const nodeAttrs = { 
+          label: component.Node, 
+          ...styleConfig.node,
+          class: classAttribute  // Add the class attribute
+        };
+
+        graph.setNode(component.Node, nodeAttrs);
+        graph.setParent(component.Node, subclusterId);
+      });
+    });
+  });
+
+  // Add edges to the graph
+  relations.forEach(relation => {
+    const edgeAttrs = { ...styleConfig.edge };
+    graph.setEdge(relation.from, relation.to, edgeAttrs);
+  });
+
+  return graph;
+}
+
+function handleFileLoad() {
+  const componentFile = document.getElementById('component-file').files[0];
+  const relationFile = document.getElementById('relation-file').files[0];
+  const styleFile = document.getElementById('style-file').files[0];
+  if (!componentFile || !relationFile) {
+    alert('Please select both component and relation CSV files.');
+    return;
+  }
+  Promise.all([
+    readCSVFile(componentFile),
+    readCSVFile(relationFile),
+    readTextFile(styleFile)
+  ]).then(([components, relations, styleContent]) => {
+    console.log("Loaded components:", components);
+    console.log("Loaded relations:", relations);
+    // Parse the style file
+    styleConfig = parseStyleFile(styleContent);
+    console.log("Parsed style configuration:", styleConfig);
+		
+    // Get unique properties from components
+    const uniqueProperties = [...new Set(components.flatMap(Object.keys))];
+    console.log("Unique properties: ", uniqueProperties);
+    
+    // Create property selectors
+    const clusterSelector = createPropertySelector(uniqueProperties, "Select Properties for Clusters");
+    const subclusterSelector = createPropertySelector(uniqueProperties, "Select Properties for Subclusters");
+    const classSelector = createPropertySelector(uniqueProperties, "Select Properties for Classes");
+    
+    const container = document.getElementById('property-selector-container');
+    container.innerHTML = ''; // Clear previous content
+    
+    // Create a flex container for the selectors
+    const flexContainer = document.createElement('div');
+    flexContainer.style.display = 'flex';
+    flexContainer.style.justifyContent = 'space-between';
+    flexContainer.style.marginBottom = '10px';
+    
+    // Add selectors to the flex container
+    flexContainer.appendChild(clusterSelector.container);
+    flexContainer.appendChild(subclusterSelector.container);
+    flexContainer.appendChild(classSelector.container);
+    
+    // Add the flex container to the main container
+    container.appendChild(flexContainer);
+    
+    // Create a single Apply button
+    const applyButton = document.createElement('button');
+    applyButton.textContent = 'Apply';
+    applyButton.addEventListener('click', () => {
+      const selectedClusterProperties = clusterSelector.getSelectedProperties();
+      const selectedSubclusterProperties = subclusterSelector.getSelectedProperties();
+      const selectedClassProperties = classSelector.getSelectedProperties();
+      updateGraph(components, relations, selectedClusterProperties, selectedSubclusterProperties, selectedClassProperties);
+    });
+    container.appendChild(applyButton);
+    
+    // Store components and relations in global variables or state
+    window.components = components;
+    window.relations = relations;
+  }).catch(error => {
+    console.error('Error loading CSV files:', error);
+    alert('Error loading CSV files. Please check the console for details.');
+  });
+}
+function createPropertySelector(properties, title) {
+  const container = document.createElement('div');
+  container.className = 'property-selector';
+  container.style.width = '30%'; // Set width to roughly 1/3 of the container
+  container.style.display = 'inline-block'; // Allow horizontal alignment
+  container.style.verticalAlign = 'top'; // Align tops of the columns
+
+  const heading = document.createElement('h3');
+  heading.textContent = title;
+  container.appendChild(heading);
+
+  const checkboxContainer = document.createElement('div');
+  checkboxContainer.style.maxHeight = '200px'; // Set a max height
+  checkboxContainer.style.overflowY = 'auto'; // Make it scrollable if content exceeds max height
+  container.appendChild(checkboxContainer);
+
+  const selectedProperties = new Set();
+
+  properties.forEach(property => {
+    const label = document.createElement('label');
+    label.style.display = 'block'; // Stack checkboxes vertically
+    label.style.marginBottom = '5px'; // Add some space between checkboxes
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = property;
+    
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        selectedProperties.add(property);
+      } else {
+        selectedProperties.delete(property);
+      }
+    });
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(' ' + property));
+    checkboxContainer.appendChild(label);
+  });
+
+  return {
+    container,
+    getSelectedProperties: () => Array.from(selectedProperties)
+  };
+}
+
+function updateGraph(components, relations, clusterProperties, subclusterProperties, classProperties) {
+  const graph = generateGraph(components, relations, clusterProperties, subclusterProperties, classProperties);
+  document.getElementById('dot-src').value = graphlibDot.write(graph);
+  initialize();
+}
+
+function parseStyleFile(content) {
+      const lines = content.split('\n');
+      let currentSection = '';
+      const config = {};
+
+      lines.forEach(line => {
+        line = line.trim();
+        if (line.startsWith('[') && line.endsWith(']')) {
+          currentSection = line.slice(1, -1);
+          config[currentSection] = {};
+        } else if (line && currentSection) {
+          const [key, value] = line.split('=').map(s => s.trim());
+          config[currentSection][key] = value.replace(/"/g, '');
+        }
+      });
+
+      return config;
+    } 
+ // New function to read text files (for the style file)
+    function readTextFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+      });
+    }
 //////////////////////////////////////
 // Graph Parsing and rendering
 /////////////////////////////////////  
@@ -247,12 +568,10 @@
       const svg = await graphviz.layout(dotSrc, "svg", "dot");
       document.getElementById("graph-container").innerHTML = svg;
 
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svg, "image/svg+xml");
-      const svgElement = svgDoc.documentElement;
-
-      const width = svgElement.getAttribute("width");
-      const height = svgElement.getAttribute("height");
+      
+      const width = svg.match(/width="([0-9.]+pt)"/)[1];
+      const height = svg.match(/height="([0-9.]+pt)"/)[1];
+	  
 
       const svgContainer = document.getElementById("svg-container");
       svgContainer.setAttribute("width", width);
@@ -343,18 +662,63 @@ function animateEdge(edge){
   }
 
  function addNodeEventListeners() {
-    const nodes = document.querySelectorAll(".node");
-    nodes.forEach(node => {
-      node.addEventListener("click", (event) => {
-        event.stopPropagation(); // Prevent cluster click event from firing
-        const titleElement = node.querySelector("title");
-        if (titleElement) {
-          const nodeId = titleElement.textContent.trim();
-          toggleHighlightConnectedEdges(nodeId);
-        }
-      });
+  const nodes = document.querySelectorAll(".node");
+  const contextMenu = document.getElementById('context-menu');
+  let selectedNodeId = null;
+
+  nodes.forEach(node => {
+    node.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const titleElement = node.querySelector("title");
+      if (titleElement) {
+        const nodeId = titleElement.textContent.trim();
+        toggleHighlightConnectedEdges(nodeId);
+      }
     });
-  }
+
+    node.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      const titleElement = node.querySelector("title");
+      if (titleElement) {
+        selectedNodeId = titleElement.textContent.trim();
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = `${event.clientX}px`;
+        contextMenu.style.top = `${event.clientY}px`;
+      }
+    });
+  });
+
+  document.addEventListener("click", () => {
+    contextMenu.style.display = 'none';
+  });
+
+  document.getElementById('highlight-node').addEventListener('click', () => {
+    if (selectedNodeId) {
+      toggleHighlightConnectedEdges(selectedNodeId);
+      contextMenu.style.display = 'none';
+    }
+  });
+
+  document.getElementById('filter-graph').addEventListener('click', () => {
+    if (selectedNodeId) {
+      filterGraphByNode(selectedNodeId);
+      contextMenu.style.display = 'none';
+    }
+  });
+
+  // Reset selectedNodeId when context menu is hidden
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        if (contextMenu.style.display === 'none') {
+          selectedNodeId = null;
+        }
+      }
+    });
+  });
+
+  observer.observe(contextMenu, { attributes: true });
+}
 
 //////////////////////////////////////
 // Highlighting
@@ -414,6 +778,56 @@ function animateEdge(edge){
 	 } 
     }
   }
+
+
+//////////////////////////////////////
+// filtergraph by node
+//////////////////////////////////////   
+function filterGraphByNode(nodeId) {
+  // Get all nodes in the graph
+  const allNodes = graph.nodes();
+  
+  // Get adjacent nodes
+  const adjacentNodes = graph.neighbors(nodeId);
+  
+  // Nodes to keep (selected node and its neighbors)
+  const nodesToKeep = new Set([nodeId, ...adjacentNodes]);
+  
+  // Function to get all parent clusters of a node
+  function getParentClusters(node) {
+    const parents = [];
+    let parent = graph.parent(node);
+    while (parent) {
+      parents.push(parent);
+      parent = graph.parent(parent);
+    }
+    return parents;
+  }
+  
+  // Add parent clusters of all nodes to keep
+  nodesToKeep.forEach(node => {
+    const parents = getParentClusters(node);
+    parents.forEach(parent => nodesToKeep.add(parent));
+  });
+  
+  // Remove nodes that are not in nodesToKeep
+  allNodes.forEach(node => {
+    if (!nodesToKeep.has(node)) {
+      graph.removeNode(node);
+    }
+  });
+  
+  // Remove edges that are not connected to the selected node or its neighbors
+  graph.edges().forEach(edge => {
+    if (!nodesToKeep.has(edge.v) || !nodesToKeep.has(edge.w)) {
+      graph.removeEdge(edge);
+    }
+  });
+  
+  // Render the updated graph
+  renderGraph(graphlibDot.write(graph));
+}
+
 
 //////////////////////////////////////
 // Cluster Handling
@@ -715,7 +1129,7 @@ function toggleClassVisibility(className, isVisible) {
   if (!graph) return;
 
   if (!isVisible) {
-    
+    console.log("starting filter");
     // Identify clusters to remove
     const clustersToRemove = graph.nodes().filter(clusterId => {
       const cluster = graph.node(clusterId);
@@ -793,7 +1207,7 @@ function toggleClassVisibility(className, isVisible) {
     graph = graphlibDot.read(initialDotSrc);
   }
 
-  
+ // renderGraph(graphlibDot.write(graph));
 }
 
 
@@ -957,11 +1371,6 @@ function highlightNode(elementId,highLight) {
 	};
 }
 
-  
-  
-
-
-
 function getHighestCollapsedParent(nodeId) {
   let currentNode = nodeId;
   //console.log(`Starting cluster determination for node ${nodeId}`);
@@ -1000,8 +1409,6 @@ function getHighestCollapsedParent(nodeId) {
   //console.log(`Determined cluster ${currentNode}`);
   return currentNode;
 }
-
-
 
 function getSubclusters(clusterId) {
   const subclusters = [];
@@ -1067,16 +1474,26 @@ function collectAllNodes(clusterId, collectedNodes = new Set()) {
       }
     }
   });
-
   return collectedNodes;
 }
-
-
-
-
-  // Call initialize 
+  // add event listeners and Call initialize 
+      document.getElementById('update-dot-src').addEventListener('click', () => {
+     initialize();
+    });
+	document.getElementById('generate-graph').addEventListener('click', handleFileLoad);
+	//eventlistener for collapsing file based section
+	document.getElementById('toggle-file-based-graph').addEventListener('click', function() {
+  const container = document.getElementById('file-based-graph-container');
+  const button = this;
+  if (container.style.display === 'none') {
+    container.style.display = 'flex';
+    button.textContent = 'File Based Graph ▲';
+  } else {
+    container.style.display = 'none';
+    button.textContent = 'File Based Graph ▼';
+  }
+});
   initialize();
-
 </script>
 </body>
 </html>
