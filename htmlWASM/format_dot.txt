@@ -1,0 +1,27 @@
+[graph]
+layout="dot"
+splines="spline"
+[node]
+shape="rect"
+height="0.75"
+width="1.25"
+fixedsize="False"
+fillcolor="White"
+fontname="Arial"
+fontsize="10"
+style="filled"
+[edge]
+[cluster]	
+fillcolor="#698287"
+fontname="Calibri Bold"
+fontcolor="White"
+style="filled"
+penwidth="1"
+fontsize="20"
+[subCluster]	
+fillcolor="#858B8B"
+fontname="Calibri Bold"
+fontcolor="White"
+style="filled"
+penwidth="1"
+fontsize="20"
