@@ -43,10 +43,10 @@ This tool allows you to visualize and interact with complex graph structures usi
 #### Method 1: Using CSV Files
 
 1. Click on "File Based Graph ▼" to expand the file input section.
-2. Prepare three CSV files:
-   - Nodes file: Contains information about graph nodes.
-   - Edges file: Defines connections between nodes.
-   - Style file: Specifies visual styles for graph elements.
+2. Prepare three files: (see examples)
+   - CSV Nodes file: Contains information about graph nodes.
+   - CSV Edges file: Defines connections between nodes.
+   - TXT Style file: Specifies visual styles for graph elements.
 3. Click "Choose File" next to each input to select your prepared CSV files.
 4. After selecting all files, click "Load files".
 5. The tool will process your files and generate a graph.
