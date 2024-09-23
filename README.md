@@ -93,6 +93,8 @@ By following this guide, you should be able to effectively use the interactive g
 
 ## 2.1 SVG Javascript Features
 
+This part describes the javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
+
 The following features are currently added:
 
 -Highlighting: when nodes or edges are clicked they are highlighted. When clicking on a node all connecting edges are also highlighted, making it easier to trace them when there are many edges in a diagram
