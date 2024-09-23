@@ -124,4 +124,6 @@ The content of the svg-script file should be added in front of the closing /svg 
 Scripted:
 
  or use the script update-svg.sh
+```
  dot -Tsvg -otransactions.svg transactions.dot && ../../dynamic-SVG-from-Graphviz/update-svg.sh transactions.svg
+```
