@@ -49,7 +49,8 @@ This tool allows you to visualize and interact with complex graph structures usi
    - TXT Style file: Specifies visual styles for graph elements.
 3. Click "Choose File" next to each input to select your prepared CSV files.
 4. After selecting all files, click "Load files".
-5. The tool will process your files and generate a graph.
+5. The tool will process your files and present the choice of how you want to cluster your data, select the properties to be used for cluster and subcluster and classes.
+6. Press "Apply" and the tool will generate the dot source-code and the graph.
 
 #### Method 2: Using DOT Source
 
