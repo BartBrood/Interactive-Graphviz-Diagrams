@@ -1,12 +1,14 @@
 # Interactive Graphviz diagrams
 
+Dynamic Graphviz graphs with collapsible and expandable clusters, edge highlighting through user clicks and graph subset filtering. Uses either csv files or dot as a source.
+
 2 versions exist in this repository:
 
-1. HTML version receiving dot source code rendering the graph locally using graphviz WASM library 
+1. HTML version receiving dot source code rendering the graphh locally using graphviz WASM library 
 2. javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
 
 ## 1.1 HTML version features
-This version takes a different approach, it loads the dot source code into a grap object using the graphlib-dot parser read method, applies changes to the graph object (highlight edges, collapse and expand clusters) and then writes the graph back to dot source code using the graphlib-dot write method and provides the new dot source code to the Grahviz WASM library.
+This loads the dot source code into a graph object using the graphlib-dot parser read method, applies changes to the graph object (highlight edges, collapse and expand clusters) and then writes the graph back to dot source code using the graphlib-dot write method and provides the new dot source code to the Grahviz WASM library.
 libraries used
 graphlibdot: https://github.com/dagrejs/graphlib-dot?tab=readme-ov-file
 graphviz Wasm: https://github.com/hpcc-systems/hpcc-js-wasm/
