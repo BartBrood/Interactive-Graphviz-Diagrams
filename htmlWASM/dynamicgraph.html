@@ -4,176 +4,352 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Graphviz Example with Faceted Navigation</title>
-  <style>
-    /* Container for the entire page */
+ <style>
+    :root {
+      --primary-color: #acf9e9;
+      --secondary-color: #809294;
+      --background-color: #dde3e3;
+      --text-color: #333333;
+      --border-color: #333d3e;
+      --hover-color: #809294;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
     #page-container {
       display: flex;
       flex-direction: column;
       align-items: stretch;
       width: 100%;
+      margin: 0 auto;
+      padding: 20px;
     }
 
-    /* Full width container for the dot source input */
     #dot-src-container {
       width: 100%;
       margin-bottom: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
     }
 
-    /* Main content area below the dot source input */
-    #main-container {
+   #main-container {
       display: flex;
       align-items: flex-start;
       width: 100%;
+      gap: 20px;
+      overflow: hidden; /* Prevent scrollbars on the main container */
     }
 
-    /* Faceted navigation on the left */
     #faceted-navigation {
-      width: 250px;
-      padding-right: 20px;
+      width: 280px;
+      flex-shrink: 0; /* Prevent the navigation from shrinking */
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 220px); /* Adjust based on your layout */
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      max-height: calc(100vh - 100px); /* Adjust based on your layout */
+      overflow-y: auto; /* Allow scrolling in the navigation if needed */
     }
 
     /* SVG container on the right */
-    #svg-container {
+      #svg-container {
       flex-grow: 1;
-      overflow: auto;
-      padding-left: 20px;
-      max-width: calc(100% - 290px); /* Adjusted width */
-	  border-left: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    #graph-container {
+      flex-grow: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #graph-container svg {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
     }
 
     textarea {
       width: 100%;
       height: 200px;
       resize: vertical;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
     }
-	.scroll-container {
+
+    .scroll-container {
       flex-grow: 1;
       overflow-y: auto;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
 
     #clusters-list, #classes-list {
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
 
-    #apply-filter-button {
-      margin-top: auto;
+    button {
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: var(--text-color);
+      border: none;
+      transition: background-color 0.3s, transform 0.1s;
     }
-	
-	   .slider-container {
+
+    button:hover {
+      background-color: var(--hover-color);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .button-large {
+      height: 44px;
+      padding: 0 24px;
+      font-size: 16px;
+    }
+
+    .button-icon-left {
+      padding-left: 12px;
+    }
+
+    .button-icon-right {
+      padding-right: 12px;
+    }
+
+    .button-icon-both {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .slider-container {
       width: 100%;
-      margin-top: 10px;
+      margin-top: 15px;
     }
+
     .slider {
       -webkit-appearance: none;
-      width: 90%;
-      height: 15px;
-      border-radius: 5px;
-      background: #d3d3d3;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #d7dcdf;
       outline: none;
       opacity: 0.7;
-      -webkit-transition: .2s;
-      transition: opacity .2s;
+      transition: opacity 0.2s;
     }
+
     .slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 25px;
-      height: 25px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      background: #4CAF50;
+      background: var(--secondary-color);
       cursor: pointer;
+      transition: background-color 0.3s;
     }
+
     .slider::-moz-range-thumb {
-      width: 25px;
-      height: 25px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      background: #4CAF50;
+      background: var(--secondary-color);
       cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .slider:hover::-webkit-slider-thumb,
+    .slider:hover::-moz-range-thumb {
+      background-color: var(--hover-color);
     }
 
     .cluster { cursor: pointer; }
     .cluster:hover { opacity: 0.8; }
     .cluster-collapsed { stroke-width: 2px; stroke-dasharray: 5, 5; }
     .node { cursor: pointer; }
-    .node ellipse, .node polygon, .node rect { transition: all 0.5s ease-in-out; }
-	  #file-input-container, #property-selector-container {
+    .node ellipse, .node polygon, .node rect { transition: all 0.3s ease-in-out; }
+
+    #file-input-container, #property-selector-container {
       margin-bottom: 20px;
     }
+
     .property-selector {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-top: 10px;
+      border: 1px solid var(--border-color);
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 8px;
+      background-color: white;
     }
+
     .property-selector label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
-    .property-selector button {
-      margin-top: 10px;
-    }
-	#toggle-file-based-graph {
-	  margin-bottom: 10px;
-	  padding: 5px 10px;
-	  background-color: #f0f0f0;
-	  border: 1px solid #ccc;
-	  cursor: pointer;
 
-  }
-          #file-based-graph-container {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-start;
-            gap: 20px;
-        }
-        .file-input-container {
-            flex: 1 1 auto;
-            min-width: 200px;
-            text-align: center;
-        }
-        .file-input-header {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        #generate-graph {
-            flex-basis: 100%;
-            margin-top: 20px;
-        }
-        #property-selector-container {
-            flex-basis: 100%;
-        }
-	
+    #file-based-graph-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .file-input-container {
+      flex: 1 1 auto;
+      min-width: 200px;
+      text-align: center;
+    }
+
+    .file-input-header {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    #generate-graph {
+      flex-basis: 100%;
+      margin-top: 20px;
+    }
+
+    #property-selector-container {
+      flex-basis: 100%;
+    }
+
+    #context-menu {
+      position: fixed;
+      z-index: 10000;
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 8px;
+      display: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    #context-menu ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #context-menu li {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    #context-menu li:hover {
+      background-color: var(--hover-color);
+    }
+
+    h3 {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+      margin-top: 0;
+    }
+
+    #toggle-file-based-graph {
+      background-color: var(--primary-color);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-bottom: 15px;
+    }
+
+    
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-input-label {
+      display: inline-block;
+      padding: 8px 12px;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .file-input-label:hover {
+      background-color: var(--hover-color);
+    }
+
+    .file-name {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
   <div id="page-container">
-  <!-- New file input elements -->
-   <button id="toggle-file-based-graph">File Based Graph ▼</button>
-	 <div id="file-based-graph-container" style="display: none;">
-        <div class="file-input-container">
-            <span class="file-input-header">Nodes</span>
-            <input type="file" id="component-file" accept=".csv" />
-        </div>
-        <div class="file-input-container">
-            <span class="file-input-header">Edges</span>
-            <input type="file" id="relation-file" accept=".csv" />
-        </div>
-        <div class="file-input-container">
-            <span class="file-input-header">Style</span>
-            <input type="file" id="style-file" accept=".txt" />
-        </div>
-        <button id="generate-graph">Load files</button>
-        <div id="property-selector-container"></div>
+    <button id="toggle-file-based-graph">File Based Graph ▼</button>
+    <div id="file-based-graph-container" style="display: none;">
+      <div class="file-input-container">
+        <span class="file-input-header">Nodes</span>
+        <label for="component-file" class="file-input-label">Choose File</label>
+        <input type="file" id="component-file" accept=".csv" />
+        <div class="file-name" id="component-file-name">No file chosen</div>
+      </div>
+      <div class="file-input-container">
+        <span class="file-input-header">Edges</span>
+        <label for="relation-file" class="file-input-label">Choose File</label>
+        <input type="file" id="relation-file" accept=".csv" />
+        <div class="file-name" id="relation-file-name">No file chosen</div>
+      </div>
+      <div class="file-input-container">
+        <span class="file-input-header">Style</span>
+        <label for="style-file" class="file-input-label">Choose File</label>
+        <input type="file" id="style-file" accept=".txt" />
+        <div class="file-name" id="style-file-name">No file chosen</div>
+      </div>
+      <button id="generate-graph" class="button-large">Load files</button>
+      <div id="property-selector-container"></div>
     </div>
- 
 
-    <!-- Full width dot source container -->
     <div id="dot-src-container">
       <textarea id="dot-src" spellcheck="false">
+        
                 digraph G {
           subgraph cluster_0 {
             style=filled;
@@ -225,15 +401,13 @@
           end [shape=Msquare, fillcolor="white", color="black"];
         }
       </textarea>
-      <button id="update-dot-src">Update/Reset Graph</button>
-      Click on Nodes to highlight/unhighlight connected edges, click on clusters to collapse/expand.
+      <button id="update-dot-src" class="button-large">Update/Reset Graph</button>
+      <p>Click on Nodes to highlight/unhighlight connected edges, click on clusters to collapse/expand.</p>
     </div>
     
-    <!-- Main content area -->
     <div id="main-container">
-      <!-- Faceted navigation on the left -->
       <div id="faceted-navigation">
-        <button id="apply-filter-button">Apply Filter</button>
+        <button id="apply-filter-button" class="button-large">Apply Filter</button>
         <h3>Expand/Collapse Clusters</h3>
         <div class="scroll-container">
           <div id="clusters-list"></div>
@@ -247,18 +421,19 @@
           <div id="alphanumeric-classes-list"></div>
         </div>
       </div>
-      <!-- SVG container on the right -->
       <div id="svg-container">
         <div id="graph-container"></div>
       </div>
     </div>
-	<div id="context-menu" style="position: fixed; z-index: 10000; background: white; border: 1px solid #ccc; padding: 5px; display: none;">
-	  <ul style="list-style-type: none; padding: 0; margin: 0;">
-		<li id="highlight-node" style="padding: 5px; cursor: pointer;">Highlight Connected Edges</li>
-		<li id="filter-graph" style="padding: 5px; cursor: pointer;">Filter Graph</li>
-	  </ul>
+    <div id="context-menu">
+      <ul>
+        <li id="highlight-node">Highlight Connected Edges</li>
+        <li id="filter-graph">Filter Graph</li>
+      </ul>
     </div>
   </div>
+
+ 
 
 <script type="module">
   import "https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.4/dist/graphlib-dot.min.js";
@@ -281,6 +456,7 @@
 
   async function initializeGraphviz() {
     try {
+	  await Graphviz.unload();
       graphviz = await Graphviz.load();
     } catch (error) {
       console.error("Error loading Graphviz:", error);
@@ -290,7 +466,6 @@
 
    // Initialize and set up event listeners
   async function initialize() {
-    await initializeGraphviz();
     
     initialDotSrc = document.getElementById('dot-src').value;
     parseAndRenderGraph(initialDotSrc);
@@ -416,15 +591,15 @@ function handleFileLoad() {
     readCSVFile(relationFile),
     readTextFile(styleFile)
   ]).then(([components, relations, styleContent]) => {
-    console.log("Loaded components:", components);
-    console.log("Loaded relations:", relations);
+    //console.log("Loaded components:", components);
+    //console.log("Loaded relations:", relations);
     // Parse the style file
     styleConfig = parseStyleFile(styleContent);
-    console.log("Parsed style configuration:", styleConfig);
+    //console.log("Parsed style configuration:", styleConfig);
 		
     // Get unique properties from components
     const uniqueProperties = [...new Set(components.flatMap(Object.keys))];
-    console.log("Unique properties: ", uniqueProperties);
+    //console.log("Unique properties: ", uniqueProperties);
     
     // Create property selectors
     const clusterSelector = createPropertySelector(uniqueProperties, "Select Properties for Clusters");
@@ -565,6 +740,7 @@ function parseStyleFile(content) {
 
   async function renderGraph(dotSrc) {
     try {
+	  await initializeGraphviz();
       const svg = await graphviz.layout(dotSrc, "svg", "dot");
       document.getElementById("graph-container").innerHTML = svg;
 
@@ -716,7 +892,15 @@ function animateEdge(edge){
       }
     });
   });
-
+    document.getElementById('component-file').addEventListener('change', function(e) {
+      document.getElementById('component-file-name').textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+    });
+    document.getElementById('relation-file').addEventListener('change', function(e) {
+      document.getElementById('relation-file-name').textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+    });
+    document.getElementById('style-file').addEventListener('change', function(e) {
+      document.getElementById('style-file-name').textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+    });
   observer.observe(contextMenu, { attributes: true });
 }
 
@@ -1129,7 +1313,7 @@ function toggleClassVisibility(className, isVisible) {
   if (!graph) return;
 
   if (!isVisible) {
-    console.log("starting filter");
+    //console.log("starting filter");
     // Identify clusters to remove
     const clustersToRemove = graph.nodes().filter(clusterId => {
       const cluster = graph.node(clusterId);
