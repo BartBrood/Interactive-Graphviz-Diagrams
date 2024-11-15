@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Graphviz Example with Faceted Navigation</title>
+  <title>Graphviz dynamic graph</title>
  <style>
     :root {
       --primary-color: #acf9e9;
@@ -433,7 +433,10 @@
     </div>
   </div>
 
- 
+
+
+
+
 
 <script type="module">
   import "https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.4/dist/graphlib-dot.min.js";
@@ -449,6 +452,8 @@
   let components, relations;
   let selectedProperties = [];
   let styleConfig = {}; // New variable to store parsed style configuration
+  let currentScale = 1;
+  let currentTranslate = [0, 0];
 
 //////////////////////////////////////
 // Init
@@ -750,10 +755,16 @@ function parseStyleFile(content) {
 	  
 
       const svgContainer = document.getElementById("svg-container");
+	  const graphContainer = document.getElementById("graph-container");
       svgContainer.setAttribute("width", width);
       svgContainer.setAttribute("height", height);
+	  currentScale = 1;
+      currentTranslate = [0, 0];
+	  graphContainer.style.transform = `translate(${currentTranslate[0]}px, ${currentTranslate[1]}px) scale(${currentScale})`;
+	  svgContainer.addEventListener("wheel", handleZoom);
 
       addClusterEventListeners();
+
       addNodeEventListeners();
       animateGraphChanges();
     } catch (error) {
@@ -820,6 +831,33 @@ function animateEdge(edge){
         setTimeout(function(){polygon.style.opacity='1';},2000)
     }
 }
+function handleZoom(event) {
+  event.preventDefault(); // Prevent the default page scroll
+ // Get the SVG container element   
+  const svgContainer = document.getElementById("svg-container");
+
+  // Get the graph container element inside the SVG container  
+  const graphContainer = document.getElementById("graph-container");
+  // Get the mouse position relative to the SVG container
+  const rect = svgContainer.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+  const mouseY = event.clientY - rect.top;
+
+  // Determine the scaling factor based on the scroll direction
+  let scaleFactor = 1.1;
+  if (event.deltaY < 0) {
+    scaleFactor = 1 / 1.1; // Zoom in
+  } else {
+    scaleFactor = 1.1; // Zoom out
+  }
+
+  // Update the current scale, considering the mouse position
+  currentScale *= scaleFactor;
+  graphContainer.style.transformOrigin = `${mouseX}px ${mouseY}px`;
+  graphContainer.style.transform = `scale(${currentScale})`;
+}
+
+
  
 //////////////////////////////////////
 // Event Listeners
