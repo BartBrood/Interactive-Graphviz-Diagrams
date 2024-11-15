@@ -19,6 +19,8 @@ features:
 
 -load csv files with nodes , edges and formatting from csv format into dot syntax, select properties of nodes for being used as cluster, subcluster and class highlighters.
 
+-zoom in and out when hovering over diagram use mouse wheel
+
 -node click: highlight edges
 
 -cluster click collapse/expand cluster, redraw edges to collapsed node for cluster, collapse /expand all subclusters.
