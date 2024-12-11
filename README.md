@@ -27,12 +27,12 @@ features:
 
 -facetted navigation (cluster tree is shown and classes are shown):
 
-    -cluster collapse /Expand after applying filter
+-cluster collapse /Expand after applying filter
     
-    -class hide:  remove/add all elements that have class from diagram
-    -Numerical classes are separated in seprate section with a slider to allow show/hide order of nodes edges and clusters.
+-class hide:  remove/add all elements that have class from diagram
+-Numerical classes are separated in seprate section with a slider to allow show/hide order of nodes edges and clusters.
     
-    -class highlight: highlight all elements on graph having class.
+-class highlight: highlight all elements on graph having class.
 
 
 ## 1.2 HTML Interactive Graph Visualization Tool - Usage Guide
