@@ -454,7 +454,7 @@
   let styleConfig = {}; // New variable to store parsed style configuration
   let currentScale = 1;
   let currentTranslate = [0, 0];
-
+  let placeholders=[];
 //////////////////////////////////////
 // Init
 //////////////////////////////////////
@@ -473,8 +473,43 @@
   async function initialize() {
     
     initialDotSrc = document.getElementById('dot-src').value;
-    parseAndRenderGraph(initialDotSrc);
+	const { processedInput} = escapeHtmlLabels(initialDotSrc);
+	//console.log("escaped");
+	//console.log(processedInput);
+    parseAndRenderGraph(processedInput);
   }
+//////////////////////////////////////
+// HTML escaping
+/////////////////////////////////////  
+function escapeHtmlLabels(input) {
+  const htmlLabelRegex = /label\s*=\s*(<[\s\S]?<[\s\S]*?>[\s\S]?>)/g;
+  
+  placeholders = [];
+  
+  const escapedInput = input.replace(htmlLabelRegex, (match, p1) => {
+    const placeholder = `__HTML_LABEL_PLACEHOLDER_${placeholders.length}__`;
+    placeholders.push(p1);
+    return match.replace(/<[\s\S]?<[\s\S]*?>[\s\S]?>/, placeholder);
+  });
+  
+  return {
+    processedInput: escapedInput  };
+}
+
+function restoreHtmlLabels(processedInput) {
+    
+  if (!Array.isArray(placeholders) || placeholders.length === 0) {
+    return processedInput;
+  }
+  
+  let restoredInput = processedInput;
+  placeholders.forEach((label, index) => {
+    const placeholder = `__HTML_LABEL_PLACEHOLDER_${index}__`;
+    restoredInput = restoredInput.replace(new RegExp(placeholder, 'g'), label);
+  });
+  
+  return restoredInput;
+}
 
 //////////////////////////////////////
 // File handling
@@ -734,8 +769,9 @@ function parseStyleFile(content) {
       graph = graphlibDot.read(dotSrc);
       originalGraph = graphlibDot.read(dotSrc); // Keep a copy of the original graph
       //console.log("Graph structure:", graph);
+
       renderGraph(dotSrc);
-	  // Populate the faceted navigation after the graph is parsed
+	  //Populate the faceted navigation after the graph is parsed
       populateFacetedNavigation();
     } catch (error) {
       console.error("Error parsing DOT source:", error);
@@ -745,8 +781,11 @@ function parseStyleFile(content) {
 
   async function renderGraph(dotSrc) {
     try {
+	  //console.log(dotSrc);
+	  const finalDot = restoreHtmlLabels(dotSrc);
+	  //console.log(finalDot);
 	  await initializeGraphviz();
-      const svg = await graphviz.layout(dotSrc, "svg", "dot");
+      const svg = await graphviz.layout(finalDot, "svg", "dot");
       document.getElementById("graph-container").innerHTML = svg;
 
       
@@ -1438,7 +1477,8 @@ function applyFilters() {
   //console.log('Applying filters');
   // Create a new graph based on the original
   //console.log(graphlibDot.read(initialDotSrc));
-  Object.assign(graph, graphlibDot.read(initialDotSrc));
+  const {processedInput} = escapeHtmlLabels(initialDotSrc);
+  Object.assign(graph, graphlibDot.read(processedInput));
   //console.log('before filtering graph', graph);
   collapsedClusters.clear();
   
