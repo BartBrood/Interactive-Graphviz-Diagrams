@@ -883,6 +883,12 @@ function handleZoom(event) {
   const mouseX = event.clientX - rect.left;
   const mouseY = event.clientY - rect.top;
   
+  // Handle first zoom
+  if (offsetX === 0) {
+    offsetX = mouseX - (mouseX * currentScale);
+    offsetY = mouseY - (mouseY * currentScale);
+  }
+  
   // Get position relative to transformed element
   const relativeX = (mouseX - offsetX) / currentScale;
   const relativeY = (mouseY - offsetY) / currentScale;
@@ -900,7 +906,6 @@ function handleZoom(event) {
   graphContainer.style.transformOrigin = '0 0';
   graphContainer.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${currentScale})`;
 }
-
  
 //////////////////////////////////////
 // Event Listeners
