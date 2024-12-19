@@ -455,6 +455,7 @@
   let currentScale = 1;
   let offsetX = 0;
   let offsetY = 0;
+  let isFirstZoom = true;
   let currentTranslate = [0, 0];
   let placeholders=[];
 //////////////////////////////////////
@@ -473,7 +474,9 @@
 
    // Initialize and set up event listeners
   async function initialize() {
-    
+    currentScale = 1;
+	offsetX = 0;
+    offsetY = 0;
     initialDotSrc = document.getElementById('dot-src').value;
 	const { processedInput} = escapeHtmlLabels(initialDotSrc);
 	//console.log("escaped");
@@ -800,6 +803,8 @@ function parseStyleFile(content) {
       svgContainer.setAttribute("width", width);
       svgContainer.setAttribute("height", height);
 	  currentScale = 1;
+	  offsetX = 0;
+      offsetY = 0;
       currentTranslate = [0, 0];
 	  graphContainer.style.transform = `translate(${currentTranslate[0]}px, ${currentTranslate[1]}px) scale(${currentScale})`;
 	  svgContainer.addEventListener("wheel", handleZoom);
@@ -884,9 +889,10 @@ function handleZoom(event) {
   const mouseY = event.clientY - rect.top;
   
   // Handle first zoom
-  if (offsetX === 0) {
+  if (isFirstZoom) {
     offsetX = mouseX - (mouseX * currentScale);
     offsetY = mouseY - (mouseY * currentScale);
+    isFirstZoom = false;
   }
   
   // Get position relative to transformed element
