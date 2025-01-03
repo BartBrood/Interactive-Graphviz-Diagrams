@@ -62,8 +62,9 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       padding: 20px;
-      max-height: calc(100vh - 100px); /* Adjust based on your layout */
-      overflow-y: auto; /* Allow scrolling in the navigation if needed */
+      max-height: calc(100vh); *//* Adjust based on your layout */
+      overflow-y: auto;
+      gap: 10px; /* Add spacing between sections */
     }
 
     /* SVG container on the right */
@@ -75,17 +76,16 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       padding: 20px;
-      overflow: hidden;
+      overflow: auto;
     }
 
     #graph-container {
-      flex-grow: 1;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    width: 100%; /* Set desired width */
+    height: 100vh; /* Limit height relative to the viewport */
+    overflow: hidden; /* Enable scrollbars for overflow */
+    display: flex; /* Ensure content stays centered */
+    justify-content: center;
+    align-items: center;
     }
 
     #graph-container svg {
@@ -109,11 +109,14 @@
     .scroll-container {
       flex-grow: 1;
       overflow-y: auto;
-      margin-bottom: 15px;
+      margin-bottom: 5px;
+	  min-height: 150px; /* Prevent them from shrinking too much */
     }
 
     #clusters-list, #classes-list {
-      margin-bottom: 15px;
+     flex-grow: 1; /* Allow these sections to share the remaining space */
+     overflow-y: auto; /* Enable scrolling for long lists */
+     
     }
 
     button {
@@ -155,13 +158,13 @@
     }
 
     .slider-container {
-      width: 100%;
+      width: 80%;
       margin-top: 15px;
     }
 
     .slider {
       -webkit-appearance: none;
-      width: 100%;
+      width: 80%;
       height: 8px;
       border-radius: 4px;
       background: #d7dcdf;
@@ -1293,7 +1296,7 @@ function collapseCluster(clusterId, removeCompletely = false) {
       </label>
 	   <label>
             <input type="checkbox" unchecked data-class="${cls}" class="secondary-checkbox">
-       </label><br>
+       </label>
       <br>
     `;
   });
