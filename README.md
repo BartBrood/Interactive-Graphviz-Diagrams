@@ -7,7 +7,8 @@ Dynamic Graphviz graphs with collapsible and expandable clusters, edge highlight
 1. HTML version receiving dot source code rendering the graphh locally using graphviz WASM library 
 2. javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
 
-   ![image](https://github.com/user-attachments/assets/994af9ab-7862-451e-8824-ca7ac2c8857a)
+ ![image](https://github.com/user-attachments/assets/cbc4f07a-a681-4122-a597-71bc72e76818)
+
 
 ## 1.1 HTML version features
 This loads the dot source code into a graph object using the graphlib-dot parser read method, applies changes to the graph object (highlight edges, collapse and expand clusters) and then writes the graph back to dot source code using the graphlib-dot write method and provides the new dot source code to the Grahviz WASM library.
