@@ -62,9 +62,8 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       padding: 20px;
-      max-height: calc(100vh); *//* Adjust based on your layout */
-      overflow-y: auto;
-      gap: 10px; /* Add spacing between sections */
+      max-height: calc(100vh - 100px); /* Adjust based on your layout */
+      overflow-y: auto; /* Allow scrolling in the navigation if needed */
     }
 
     /* SVG container on the right */
@@ -76,16 +75,17 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       padding: 20px;
-      overflow: auto;
+      overflow: hidden;
     }
 
     #graph-container {
-    width: 100%; /* Set desired width */
-    height: 100vh; /* Limit height relative to the viewport */
-    overflow: hidden; /* Enable scrollbars for overflow */
-    display: flex; /* Ensure content stays centered */
-    justify-content: center;
-    align-items: center;
+      flex-grow: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     #graph-container svg {
@@ -109,14 +109,12 @@
     .scroll-container {
       flex-grow: 1;
       overflow-y: auto;
-      margin-bottom: 5px;
-	  min-height: 150px; /* Prevent them from shrinking too much */
+      margin-bottom: 15px;
+	  min-height: 200px;
     }
 
     #clusters-list, #classes-list {
-     flex-grow: 1; /* Allow these sections to share the remaining space */
-     overflow-y: auto; /* Enable scrolling for long lists */
-     
+      margin-bottom: 15px;
     }
 
     button {
@@ -143,6 +141,11 @@
       padding: 0 24px;
       font-size: 16px;
     }
+	.level-button {
+      height: 15px;
+      padding: 0 15px;
+      font-size: 10px;
+    }
 
     .button-icon-left {
       padding-left: 12px;
@@ -158,13 +161,13 @@
     }
 
     .slider-container {
-      width: 80%;
+      width: 100%;
       margin-top: 15px;
     }
 
     .slider {
       -webkit-appearance: none;
-      width: 80%;
+      width: 100%;
       height: 8px;
       border-radius: 4px;
       background: #d7dcdf;
@@ -369,8 +372,16 @@
               style=filled;
               color=lightblue;
               node [style=filled,color=white];
-              a0_1 -> a1_1 -> a2_1 -> a3_1;
-              label = "Cluster 0_1";
+              a0_1 -> a1_1;
+              label = "Cluster 0_1_1";
+			  subgraph cluster_0_1_1 {
+			  class="a-side 2003";
+              style=filled;
+              color=lightgrey;
+              node [style=filled,color=white];
+              a2_1 -> a3_1;
+              label = "Cluster 0_1_1";
+              }
             }
           }
 
@@ -397,6 +408,7 @@
           a1 -> b3[class="crosscluster"];
           b2 -> a3[class="crosscluster"];
           a3 -> a0;
+		  a1_1 -> a2_1;
           a3 -> end;
           b3 -> end;
           a0_1 -> b0_1 [class="crosscluster"];
@@ -410,8 +422,9 @@
     
     <div id="main-container">
       <div id="faceted-navigation">
-        <button id="apply-filter-button" class="button-large">Apply Filter</button>
-        <h3>Expand/Collapse Clusters</h3>
+        <h3></h3>
+		<button id="apply-filter-button" class="button-large">Apply Filter</button>
+		<h3>Expanded Clusters</h3>
         <div class="scroll-container">
           <div id="clusters-list"></div>
         </div>
@@ -442,6 +455,10 @@
 
 
 <script type="module">
+// Activate when used from server
+//    import "./node_modules/graphlib-dot/dist/graphlib-dot.min.js";
+//    import { Graphviz } from '/node_modules/@hpcc-js/wasm/dist/graphviz.js';
+//  Activate when used standalone
   import "https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.4/dist/graphlib-dot.min.js";
   import { Graphviz } from "https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/graphviz.js";
  
@@ -461,6 +478,8 @@
   let isFirstZoom = true;
   let currentTranslate = [0, 0];
   let placeholders=[];
+  
+
 //////////////////////////////////////
 // Init
 //////////////////////////////////////
@@ -781,6 +800,7 @@ function parseStyleFile(content) {
       renderGraph(dotSrc);
 	  //Populate the faceted navigation after the graph is parsed
       populateFacetedNavigation();
+	  createLevelButtons();
     } catch (error) {
       console.error("Error parsing DOT source:", error);
       document.getElementById("graph-container").innerHTML = "Error parsing DOT source. Please check the console for details.";
@@ -1219,6 +1239,7 @@ function collapseCluster(clusterId, removeCompletely = false) {
  }
 }
 
+
 //////////////////////////////////////
 // Faceted Navigation
 //////////////////////////////////////   
@@ -1296,7 +1317,7 @@ function collapseCluster(clusterId, removeCompletely = false) {
       </label>
 	   <label>
             <input type="checkbox" unchecked data-class="${cls}" class="secondary-checkbox">
-       </label>
+       </label><br>
       <br>
     `;
   });
@@ -1346,6 +1367,64 @@ function collapseCluster(clusterId, removeCompletely = false) {
       }
 }
 
+function createLevelButtons() {
+  const levels = new Set(
+    Array.from(document.querySelectorAll('#clusters-list [data-level]'))
+      .map(el => parseInt(el.dataset.level))
+  );
+  const sortedLevels = [...levels].sort((a, b) => a - b);
+  if (sortedLevels.length === 0) return; // Safety check
+
+  const minLevel = sortedLevels[0];
+  const maxLevel = sortedLevels[sortedLevels.length - 1];
+
+  const container = document.createElement('div');
+  container.id = 'level-buttons-container';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column'; // Add this line for vertical layout
+  container.style.gap = '2px';
+  container.style.margin = '2px 0';
+
+  // Add buttons for each real level
+  sortedLevels.forEach(level => {
+    const button = document.createElement('button');
+    button.textContent = (level === 0) ? 'Collapse all' : `Level ${level}`;
+    button.classList.add('level-button');
+    button.addEventListener('click', () => collapseClustersBelowLevel(level));
+    container.appendChild(button);
+  });
+
+  // Add the extra "Show all" button
+  const showAllButton = document.createElement('button');
+  showAllButton.textContent = 'Show all';
+  showAllButton.classList.add('level-button');
+  showAllButton.addEventListener('click', () => collapseClustersBelowLevel(maxLevel + 1));
+  container.appendChild(showAllButton);
+
+  const facetedNav = document.getElementById('faceted-navigation');
+  const existing = document.getElementById('level-buttons-container');
+  existing?.remove();
+	  // Find the h3 with the text "Expanded clusters"
+	const h3s = facetedNav.querySelectorAll('h3');
+	let targetH3 = null;
+	for (const h3 of h3s) {
+	  if (h3.textContent.trim() === 'Expanded Clusters') {
+		targetH3 = h3;
+		break;
+	  }
+	}
+
+	if (targetH3) {
+	  targetH3.after(container); // Insert after the h3
+	} else {
+	  facetedNav.insertBefore(container, facetedNav.firstChild);
+	}
+}
+
+
+
+
+
 function applyNumericalClassFilter(maxValue) {
   // Get all primary checkboxes for numerical classes
   const numericalCheckboxes = document.querySelectorAll('#numerical-classes-list .primary-checkbox');
@@ -1392,18 +1471,20 @@ function createClusterTree() {
   return tree;
 }
 
+
 function renderClusterTree(tree, container, level = 0) {
   Object.keys(tree).forEach(clusterId => {
     const label = graph.node(clusterId).label || clusterId;
     const div = document.createElement('div');
     div.style.marginLeft = `${level * 20}px`;
-    div.innerHTML = `<label><input type="checkbox" checked data-cluster="${clusterId}"> ${label}</label>`;
+    div.innerHTML = `<label><input type="checkbox" checked data-cluster="${clusterId}" data-level="${level}"> ${label}</label>`;
     container.appendChild(div);
 
     // Recursively render children
     renderClusterTree(tree[clusterId], container, level + 1);
   });
 }
+
 function toggleClassVisibility(className, isVisible) {
   if (!graph) return;
 
@@ -1488,7 +1569,18 @@ function toggleClassVisibility(className, isVisible) {
 
  // renderGraph(graphlibDot.write(graph));
 }
-
+function collapseClustersBelowLevel(level) {
+  document.querySelectorAll('#clusters-list input[data-level]').forEach(checkbox => {
+    const clusterLevel = parseInt(checkbox.dataset.level);
+    if (clusterLevel >= level) {
+      checkbox.checked = false;
+    }
+	else{
+	checkbox.checked = true;
+	}
+  });
+  applyFilters();
+}
 
 
 function applyFilters() {
