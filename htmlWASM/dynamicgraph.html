@@ -901,6 +901,10 @@ function animateEdge(edge){
     }
 }
 function handleZoom(event) {
+// Check if the Ctrl key is pressed
+if (!event.ctrlKey) {
+return; // Exit the function if Ctrl is not pressed
+}
   event.preventDefault();
   
   const svgContainer = document.getElementById("svg-container");
