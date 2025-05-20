@@ -1149,7 +1149,26 @@ function filterGraphByNode(nodeId) {
     }
     //console.log(graphlibDot.write(graph));
     renderGraph(graphlibDot.write(graph));
+	// Sync checkbox state for this cluster and its subclusters
+	updateClusterCheckboxState(clusterId);
   }
+
+function updateClusterCheckboxState(clusterId) {
+  const checkbox = document.querySelector(`#clusters-list input[data-cluster="${clusterId}"]`);
+  if (checkbox) {
+    checkbox.checked = !collapsedClusters.has(clusterId);
+  }
+
+  // Recursively update subclusters
+  const subclusters = getSubclusters(clusterId);
+  subclusters.forEach(subId => {
+    const subCheckbox = document.querySelector(`#clusters-list input[data-cluster="${subId}"]`);
+    if (subCheckbox) {
+      subCheckbox.checked = !collapsedClusters.has(subId);
+    }
+  });
+}
+
 
 function expandCluster(clusterId,isRestoring = false) {
   //console.log(`Expanding cluster: ${clusterId}`);
@@ -1163,10 +1182,24 @@ function expandCluster(clusterId,isRestoring = false) {
     graph.setNode(nodeId, nodeAttrs);
     graph.setParent(nodeId, clusterId);
 
-    // Recursively expand subclusters
-    if (originalGraph.children(nodeId).length > 0) {
-      expandCluster(nodeId);
-    }
+	// If this child is a subcluster and is in the collapsedClusters set, 
+	// restore only its collapsed node, not its full content
+	if (originalGraph.children(nodeId).length > 0 && collapsedClusters.has(nodeId)) {
+	  // Restore the collapsed node for the subcluster
+	  const collapsedNodeId = `${nodeId}_collapsed`;
+	  const nodeAttrs = {
+		label: `${graph.node(nodeId).label}\n(${originalGraph.children(nodeId).length})`,
+		shape: 'rectangle',
+		style: 'filled,dashed'
+	  };
+	  graph.setNode(collapsedNodeId, nodeAttrs);
+	  graph.setParent(collapsedNodeId, nodeId);
+	  graph.node(nodeId).collapsed = true;
+	} else if (originalGraph.children(nodeId).length > 0) {
+	  // If not collapsed, just restore the subcluster node (but don't expand its children)
+	  // No recursive call here!
+	}
+
   });
   
   // Remove all edges connected to the collapsed node
@@ -1187,23 +1220,23 @@ function expandCluster(clusterId,isRestoring = false) {
   collapsedClusters.delete(clusterId);
 
   // Restore original edges, ensuring we do not create invalid edges
-  originalGraph.edges().forEach(edge => {
-    if (clusterNodes.includes(edge.v) || clusterNodes.includes(edge.w)) {
-      const sourceNode = getHighestCollapsedParent(edge.v);
-      const targetNode = getHighestCollapsedParent(edge.w);
+	originalGraph.edges().forEach(edge => {
+																		 
+	  const sourceCollapsed = getHighestCollapsedParent(edge.v);
+	  const targetCollapsed = getHighestCollapsedParent(edge.w);
 
-      // Only add the edge if both nodes are valid
-      if (graph.hasNode(sourceNode) && graph.hasNode(targetNode)) {
-        const edgeAttrs = originalGraph.edge(edge);
-        //console.log(`Restoring edge from ${sourceNode} to ${targetNode}`);
-        graph.setEdge(sourceNode, targetNode, edgeAttrs);
-      }
-    }
-  });
+	  // Only add the edge if both endpoints are still in the graph
+	  if (graph.hasNode(sourceCollapsed) && graph.hasNode(targetCollapsed)) {
+		const edgeAttrs = originalGraph.edge(edge);
+																			
+		graph.setEdge(sourceCollapsed, targetCollapsed, edgeAttrs);
+	  }
+	 
+	});
+
 
   //console.log(`Cluster ${clusterId} expanded`);
 }
-
 function collapseCluster(clusterId, removeCompletely = false) {
   
   if (!collapsedClusters.has(clusterId)){
@@ -1223,7 +1256,7 @@ function collapseCluster(clusterId, removeCompletely = false) {
     // Create a new collapsed node only for the highest level cluster
     const collapsedNodeId = `${clusterId}_collapsed`;
     graph.setNode(collapsedNodeId, {
-      label: `${graph.node(clusterId).label}\n(collapsed)`,
+      label: `${graph.node(clusterId).label}\n( ${graph.children(clusterId).length})`,
       shape: 'rectangle',
       style: 'filled,dashed'
     });
