@@ -5,6 +5,9 @@ Dynamic Graphviz graphs with collapsible and expandable clusters, edge highlight
 2 versions exist in this repository:
 
 1. HTML version receiving dot source code rendering the graphh locally using graphviz WASM library 
+
+Test it here: https://graphinteract.com
+
 2. javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
 
  ![image](https://github.com/user-attachments/assets/cbc4f07a-a681-4122-a597-71bc72e76818)
