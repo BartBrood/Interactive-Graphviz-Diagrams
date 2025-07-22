@@ -325,9 +325,48 @@
       font-size: 12px;
       color: #666;
     }
+		.github-corner {
+	  position: fixed;
+	  top: 14px;
+	  right: 20px;
+	  z-index: 2000;
+	  color: #222; /* GitHub dark */
+	  opacity: 0.7;
+	  transition: opacity 0.2s, color 0.2s;
+	}
+
+	.github-corner:hover {
+	  opacity: 1;
+	  color: #0366d6; /* GitHub blue on hover */
+	}
+
+	/* Mobile: move in from edge */
+	@media (max-width: 700px) {
+	  .github-corner {
+		top: 12px;
+		right: 12px;
+	  }
+}
   </style>
 </head>
-<body>
+<body>	
+	<a href="https://github.com/BartBrood/Interactive-Graphviz-Diagrams" 
+	   class="github-corner" 
+	   target="_blank" 
+	   aria-label="View source on GitHub">
+	  <!-- GitHub SVG (Octocat icon) -->
+	  <svg height="32" width="32" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+		<path d="M8 .2a8 8 0 00-2.53 15.6c.4.07.55-.17.55-.38 
+		  0-.18-.01-.77-.01-1.39-2 .37-2.54-.49-2.7-.95-.09-.23-.48-.95-.82-1.14
+		  -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 
+		  2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 
+		  0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 
+		  0 0 .67-.22 2.2.82a7.69 7.69 0 012-.27c.68 0 1.36.09 2 .27 
+		  1.53-1.05 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 
+		  1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.26.54.77.54 
+		  1.55 0 1.12-.01 2.03-.01 2.31 0 .21.15.46.55.38A8 8 0 008 .2z"/>
+	  </svg>
+	</a>
   <div id="page-container">
     <button id="toggle-file-based-graph">File Based Graph ▼</button>
     <div id="file-based-graph-container" style="display: none;">
