@@ -1,27 +1,29 @@
 # Interactive Graphviz diagrams
 
-Dynamic Graphviz graphs with collapsible and expandable clusters, edge highlighting through user clicks and graph subset filtering. Uses either csv files or dot as a source.
+    Last Update: 13th Aug 2025
+
+Dynamic Graphviz graphs with collapsible and expandable clusters, edge highlighting through user clicks and graph subset filtering. Uses either CSV files or dot as a source.
 
 2 versions exist in this repository:
 
-1. HTML version receiving dot source code rendering the graphh locally using graphviz WASM library 
+1. HTML version, receiving dot source code and rendering the graph locally using Graphviz WASM library.
 
 Test it here: https://graphinteract.com
 
-2. javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
+2. JavaScript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
 
  ![image](https://github.com/user-attachments/assets/cbc4f07a-a681-4122-a597-71bc72e76818)
 
 
 ## 1.1 HTML version features
-This loads the dot source code into a graph object using the graphlib-dot parser read method, applies changes to the graph object (highlight edges, collapse and expand clusters) and then writes the graph back to dot source code using the graphlib-dot write method and provides the new dot source code to the Grahviz WASM library.
+This page starts with loading the dot source code into a memory graph-object using the graphlib-dot parser read method. Once the graph-object is loaded dynamic changes are made to the graph object (highlight edges, collapse and expand clusters, filter). once the changes are applied to the graph-object it is transformed to dot source code using the graphlib-dot write method and provides the new dot source code to the Graphviz WASM library.
 libraries used
-graphlibdot: https://github.com/dagrejs/graphlib-dot?tab=readme-ov-file
-graphviz Wasm: https://github.com/hpcc-systems/hpcc-js-wasm/
+graphlib-dot: https://github.com/dagrejs/graphlib-dot?tab=readme-ov-file
+Graphviz WASM: https://github.com/hpcc-systems/hpcc-js-wasm/
 
 features:
 
--load csv files with nodes , edges and formatting from csv format into dot syntax, select properties of nodes for being used as cluster, subcluster and class highlighters.
+-load CSV files with nodes , edges and formatting from CSV format into dot syntax, select properties of nodes for being used as cluster, subcluster and class highlighters.
 
 -zoom in and out when hovering over diagram use mouse wheel
 
@@ -34,7 +36,7 @@ features:
 -cluster collapse /Expand after applying filter
     
 -class hide:  remove/add all elements that have class from diagram
--Numerical classes are separated in seprate section with a slider to allow show/hide order of nodes edges and clusters.
+-Numerical classes are separated in seperate section with a slider to allow show/hide order of nodes edges and clusters.
     
 -class highlight: highlight all elements on graph having class.
 
@@ -106,28 +108,25 @@ By following this guide, you should be able to effectively use the interactive g
 
 ## 2.1 SVG Javascript Features
 
-This part describes the javascript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
+This part describes the JavaScript code that can be added to an SVG created by Graphviz to make it dynamic when opening in the browser (no library dependencies).
 
 The following features are currently added:
 
 -Highlighting: when nodes or edges are clicked they are highlighted. When clicking on a node all connecting edges are also highlighted, making it easier to trace them when there are many edges in a diagram
 
--zoom in or our on cluster: using the + or - button added to every cluster the drwaing is zooming in or out on the cluster.
+-zoom in or out on cluster: using the + or - button added to every cluster the drawing is zooming in or out on the cluster.
 
 The script is also adding a header section to the SVG with several features
 
--visibility switches: CSS classes can be added in grahviz dot to nodes or edges, all classes are listed in a button which will hide or show all nodes and edges with that class after clicking.
+-visibility switches: CSS classes can be added in Graphviz dot to nodes or edges, all classes are listed in a button which will hide or show all nodes and edges with that class after clicking.
 
--(April 5th 2024) I am working on making a slider button that can be used to let items appear in the order defined by numerical CSS classes added to edges and nodes. numerical classes can be ordered integer, could be just 1,2,3,... or years. They are dynamically picked up. Will soon be released.
-
--(Aug 2024) I am working on the capability to collapse and expand clusters in drawings. But this will require a separate approach, as the complexity of redrawing diagrams requires the actual graphviz library to redraw the graph. Therefore i am working on a new approach whereby the dot src code is loaded in the browser, then the svg is produced by a local WASM library and the user interactions are first done on the dot src (graph object) before the new graph is then rendered using the graphviz WASM library.
 
 ## 2.2 SVG Javascript Usage 🛠️
 Manual:
 
-When you have an svg file generated by graphviz you need to edit the file and
+When you have an SVG file generated by Graphviz you need to edit the file and
 
-change the svg opening tag by adding  onload="addInteractivity(evt)", giving something like:
+change the SVG opening tag by adding  onload="addInteractivity(evt)", giving something like:
 ```
 <svg width="2056pt" height="2297pt" viewBox="0.00 0.00 2056.00 2297.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" onload="addInteractivity(evt)">
 ```
